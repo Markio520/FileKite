@@ -56,7 +56,7 @@ try {
     # Compile lightweight native-icon root launcher FileKite.exe
     $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
     $iconPath = Join-Path $repoRoot 'src\FileAssistant.App\Assets\AppIcon.ico'
-    $launcherCs = Join-Path $stageRoot 'Launcher.cs'
+    $launcherCs = Join-Path ([System.IO.Path]::GetTempPath()) ("FileKite-Launcher-" + [Guid]::NewGuid().ToString('N') + ".cs")
     $launcherSource = @"
 using System;
 using System.Diagnostics;
@@ -98,6 +98,7 @@ internal static class Program
 "@
     [System.IO.File]::WriteAllText($launcherCs, $launcherSource, [System.Text.Encoding]::UTF8)
     & $csc /nologo /optimize+ /target:winexe "/win32icon:$iconPath" "/out:$(Join-Path $pkgDir 'FileKite.exe')" /reference:System.Windows.Forms.dll $launcherCs
+    Remove-Item -LiteralPath $launcherCs -Force -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) { throw "Failed to compile root launcher FileKite.exe" }
 
     if (Test-Path -LiteralPath $OutputZip) { Remove-Item -LiteralPath $OutputZip -Force }
