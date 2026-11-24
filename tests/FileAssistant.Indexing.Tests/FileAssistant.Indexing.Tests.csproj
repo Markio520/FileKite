@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <ProjectReference Include="../../src/FileAssistant.Indexing/FileAssistant.Indexing.csproj" />
+    <ProjectReference Include="../../src/FileAssistant.Infrastructure/FileAssistant.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/FileAssistant.Indexing.Windows/FileAssistant.Indexing.Windows.csproj" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,103 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#EAF2F1EC" />
+            <SolidColorBrush x:Key="WorkspaceSurfaceBrush" Color="#F5FCFBF7" />
+            <SolidColorBrush x:Key="WorkspacePaneBrush" Color="#DCF2F1EA" />
+            <SolidColorBrush x:Key="WorkspaceChromeBrush" Color="#70FAFAF6" />
+            <SolidColorBrush x:Key="WorkspaceSubtleBrush" Color="#B8ECECE5" />
+            <SolidColorBrush x:Key="WorkspaceCardBrush" Color="#D8FFFFFF" />
+            <SolidColorBrush x:Key="WorkspaceControlBrush" Color="#C8FFFFFF" />
+            <SolidColorBrush x:Key="WorkspaceFieldBrush" Color="#FFFAFAF6" />
+            <SolidColorBrush x:Key="WorkspaceBorderBrush" Color="#2E888C82" />
+            <SolidColorBrush x:Key="WorkspaceControlHoverBrush" Color="#DADCD1" />
+            <SolidColorBrush x:Key="WorkspaceDialogBrush" Color="#F5F5F0" />
+            <AcrylicBrush x:Key="WorkspacePopupBrush" TintColor="#F3F3EE" TintOpacity="0.74" TintLuminosityOpacity="0.75" FallbackColor="#F5F5F0" />
+            <StaticResource x:Key="ControlFillColorDefaultBrush" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ControlFillColorSecondaryBrush" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ControlFillColorTertiaryBrush" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="ControlStrokeColorDefaultBrush" ResourceKey="WorkspaceBorderBrush" />
+            <StaticResource x:Key="ControlStrokeColorSecondaryBrush" ResourceKey="WorkspaceBorderBrush" />
+            <StaticResource x:Key="ButtonBackground" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="WorkspaceAccentSubtleBrush" />
+            <StaticResource x:Key="TextControlBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="TextControlBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="TextControlBackgroundFocused" ResourceKey="WorkspaceFieldBrush" />
+            <StaticResource x:Key="ComboBoxBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ComboBoxBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ComboBoxBackgroundPressed" ResourceKey="WorkspaceFieldBrush" />
+            <StaticResource x:Key="ExpanderHeaderBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ExpanderHeaderBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ExpanderContentBackground" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="FlyoutBackground" ResourceKey="WorkspacePopupBrush" />
+            <StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="WorkspacePopupBrush" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#6616181D" />
+            <SolidColorBrush x:Key="WorkspaceSurfaceBrush" Color="#EC1B1F26" />
+            <SolidColorBrush x:Key="WorkspacePaneBrush" Color="#9A222832" />
+            <SolidColorBrush x:Key="WorkspaceChromeBrush" Color="#34384350" />
+            <SolidColorBrush x:Key="WorkspaceSubtleBrush" Color="#98191C22" />
+            <SolidColorBrush x:Key="WorkspaceCardBrush" Color="#10FFFFFF" />
+            <SolidColorBrush x:Key="WorkspaceControlBrush" Color="#3E4A5462" />
+            <SolidColorBrush x:Key="WorkspaceFieldBrush" Color="#F0232932" />
+            <SolidColorBrush x:Key="WorkspaceBorderBrush" Color="#22FFFFFF" />
+            <SolidColorBrush x:Key="WorkspaceControlHoverBrush" Color="#3E4350" />
+            <SolidColorBrush x:Key="WorkspaceDialogBrush" Color="#242C36" />
+            <AcrylicBrush x:Key="WorkspacePopupBrush" TintColor="#2E3642" TintOpacity="0.74" TintLuminosityOpacity="0.75" FallbackColor="#242C36" />
+            <StaticResource x:Key="ControlFillColorDefaultBrush" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ControlFillColorSecondaryBrush" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ControlFillColorTertiaryBrush" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="ControlStrokeColorDefaultBrush" ResourceKey="WorkspaceBorderBrush" />
+            <StaticResource x:Key="ControlStrokeColorSecondaryBrush" ResourceKey="WorkspaceBorderBrush" />
+            <StaticResource x:Key="ButtonBackground" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="WorkspaceAccentSubtleBrush" />
+            <StaticResource x:Key="TextControlBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="TextControlBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="TextControlBackgroundFocused" ResourceKey="WorkspaceFieldBrush" />
+            <StaticResource x:Key="ComboBoxBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ComboBoxBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ComboBoxBackgroundPressed" ResourceKey="WorkspaceFieldBrush" />
+            <StaticResource x:Key="ExpanderHeaderBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ExpanderHeaderBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ExpanderContentBackground" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="FlyoutBackground" ResourceKey="WorkspacePopupBrush" />
+            <StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="WorkspacePopupBrush" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="{ThemeResource AppWindowOverlayColor}" />
+            <SolidColorBrush x:Key="WorkspaceSurfaceBrush" Color="{ThemeResource AppGlassContentColor}" />
+            <SolidColorBrush x:Key="WorkspacePaneBrush" Color="{ThemeResource AppGlassPaneColor}" />
+            <SolidColorBrush x:Key="WorkspaceChromeBrush" Color="{ThemeResource AppGlassChromeColor}" />
+            <SolidColorBrush x:Key="WorkspaceSubtleBrush" Color="{ThemeResource AppGlassInsetColor}" />
+            <SolidColorBrush x:Key="WorkspaceCardBrush" Color="{ThemeResource AppGlassCardColor}" />
+            <SolidColorBrush x:Key="WorkspaceControlBrush" Color="{ThemeResource AppGlassControlColor}" />
+            <SolidColorBrush x:Key="WorkspaceFieldBrush" Color="{ThemeResource AppGlassFieldColor}" />
+            <SolidColorBrush x:Key="WorkspaceBorderBrush" Color="{ThemeResource AppGlassBorderColor}" />
+            <SolidColorBrush x:Key="WorkspaceControlHoverBrush" Color="{ThemeResource AppSelectionHoverColor}" />
+            <SolidColorBrush x:Key="WorkspaceDialogBrush" Color="{ThemeResource AppPopupFallbackColor}" />
+            <SolidColorBrush x:Key="WorkspacePopupBrush" Color="{ThemeResource AppPopupFallbackColor}" />
+            <StaticResource x:Key="ControlFillColorDefaultBrush" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ControlFillColorSecondaryBrush" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ControlFillColorTertiaryBrush" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="ControlStrokeColorDefaultBrush" ResourceKey="WorkspaceBorderBrush" />
+            <StaticResource x:Key="ControlStrokeColorSecondaryBrush" ResourceKey="WorkspaceBorderBrush" />
+            <StaticResource x:Key="ButtonBackground" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="ButtonBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ButtonBackgroundPressed" ResourceKey="WorkspaceAccentSubtleBrush" />
+            <StaticResource x:Key="TextControlBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="TextControlBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="TextControlBackgroundFocused" ResourceKey="WorkspaceFieldBrush" />
+            <StaticResource x:Key="ComboBoxBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ComboBoxBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ComboBoxBackgroundPressed" ResourceKey="WorkspaceFieldBrush" />
+            <StaticResource x:Key="ExpanderHeaderBackground" ResourceKey="WorkspaceControlBrush" />
+            <StaticResource x:Key="ExpanderHeaderBackgroundPointerOver" ResourceKey="WorkspaceControlHoverBrush" />
+            <StaticResource x:Key="ExpanderContentBackground" ResourceKey="WorkspaceSubtleBrush" />
+            <StaticResource x:Key="FlyoutBackground" ResourceKey="WorkspacePopupBrush" />
+            <StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="WorkspacePopupBrush" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

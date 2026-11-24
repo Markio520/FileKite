@@ -1,0 +1,502 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using FileAssistant.Core.Features.Search;
+using FileAssistant.Core.Abstractions;
+using FileAssistant.Core.Features.FileInput;
+using FileAssistant.Core.Features.FileCollections;
+
+namespace FileAssistant.App.Features.Workspace;
+
+public enum WorkspaceSortField
+{
+    Default = 0,
+    Name = 1,
+    Type = 2,
+    Size = 3
+}
+
+/// <summary>Workspace presentation state. Sample actions never access the file system.</summary>
+public partial class WorkspaceViewModel : ObservableObject
+{
+    private readonly List<WorkspaceFile> files = [];
+    private readonly IFileInputReader? inputReader;
+    private CancellationTokenSource? importCancellation;
+    private TaskCompletionSource? loadingFinished;
+    private int importGeneration;
+    private IReadOnlyList<WorkspaceFile> selectedFiles = [];
+    private HashSet<string> selectedKeys = new(StringComparer.OrdinalIgnoreCase);
+
+    public WorkspaceViewModel(IFileInputReader? inputReader = null, bool isStaging = true)
+        : this(inputReader, isStaging ? WorkspaceInputPurpose.Staging : WorkspaceInputPurpose.Copy) { }
+
+    public WorkspaceViewModel(IFileInputReader? inputReader, WorkspaceInputPurpose purpose, IFileCollectionStore? store = null)
+    { this.inputReader = inputReader; Purpose = purpose; collectionStore = store; }
+
+    public WorkspaceInputPurpose Purpose { get; }
+    public void RefreshDisplay()
+    {
+        foreach (var row in VisibleFiles) row.RefreshDisplay();
+        NotifyFileState();
+    }
+
+    public bool IsStaging => Purpose == WorkspaceInputPurpose.Staging;
+    public bool IsFunctionInput => !IsStaging;
+    public bool IsNotConversionInput => Purpose != WorkspaceInputPurpose.Conversion;
+    public bool IsNotRenameInput => Purpose != WorkspaceInputPurpose.Rename;
+    public bool IsNotCopyInput => Purpose != WorkspaceInputPurpose.Copy;
+    public bool ShowFloatingIsland => HasSelection && ShowList;
+    public string Title => Purpose switch { WorkspaceInputPurpose.Staging => "文件暂存区", WorkspaceInputPurpose.Conversion => "格式转换", WorkspaceInputPurpose.Rename => "待改名文件", _ => "复制与整理" };
+    public string EmptyTitle => CurrentFolderId != Guid.Empty ? "这个软件文件夹还没有文件" : IsStaging ? "暂存区还没有文件" : "还没有待处理的文件";
+    public string InputDescription => IsStaging ? "选择、拖入或粘贴文件，稍后交给需要的功能。" : "直接添加文件，或从暂存区选择文件导入。";
+    public bool CanReceiveFiles => !IsLoading;
+    public bool CanCancelLoading => IsLoading && !restoringCollection;
+    public bool CanExportSelection => !IsLoading && !HasSamples && SelectionCount > 0;
+    public bool CanExportAll => !IsLoading && !HasSamples && (ScopeEntries.Count > 0 || collection.Folders.Any(folder => folder.ParentId == CurrentFolderId));
+    public string SendSelectedLabel => $"选中 {SelectionCount:N0} 项 → 复制与整理";
+    public string SendAllLabel => $"当前文件夹全部 {ScopeEntries.Count:N0} 项 → 复制与整理";
+    public string SendSelectedToConversionLabel => $"选中 {SelectionCount:N0} 项 → 格式转换";
+    public string SendAllToConversionLabel => $"当前文件夹全部 {ScopeEntries.Count:N0} 项 → 格式转换";
+    public string SendSelectedToNamingLabel => $"选中 {SelectionCount:N0} 项 → 批量改名";
+    public string SendAllToNamingLabel => $"当前文件夹全部 {ScopeEntries.Count:N0} 项 → 批量改名";
+    public int TotalReferenceCount => HasSamples ? files.Count : SearchEntries.Count;
+    public bool HasAnyReferences => TotalReferenceCount > 0;
+    public bool HasCustomFolders => collection.Folders.Count > 0;
+    public int CustomFolderCount => collection.Folders.Count;
+    public bool HasMultipleSelection => SelectionCount > 1;
+    public bool HasSingleSelection => SelectionCount == 1;
+    public string SelectedTotalSizeLabel
+    {
+        get
+        {
+            var known = selectedFiles.Where(file => file.Size >= 0).Sum(file => file.Size);
+            return WorkspaceFile.FormatSize(known);
+        }
+    }
+    public string IslandSummary => SelectionCount == 0 ? string.Empty : $"已选 {SelectionCount:N0} 项 · {SelectedTotalSizeLabel}";
+    public string MultiSelectionBreakdown
+    {
+        get
+        {
+            if (selectedFiles.Count <= 1) return string.Empty;
+            var groups = selectedFiles
+                .GroupBy(file => file.IsCollectionFolder ? "软件文件夹" : file.Source?.IsFolder == true ? "文件夹" : string.IsNullOrEmpty(file.Source?.Extension) ? "文件" : file.Source!.Extension.TrimStart('.').ToUpperInvariant())
+                .OrderByDescending(group => group.Count())
+                .Take(4)
+                .Select(group => $"{group.Key} × {group.Count()}");
+            return string.Join(" · ", groups);
+        }
+    }
+
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasInputFeedback), nameof(HasFooterMessage))] public partial string InputFeedback { get; set; } = string.Empty;
+    [ObservableProperty, NotifyPropertyChangedFor(nameof(HasImportDetails))] public partial FileImportReport ImportReport { get; set; } = FileImportReport.Empty;
+    [ObservableProperty] public partial string LoadingMessage { get; set; } = string.Empty;
+    public bool HasInputFeedback => InputFeedback.Length > 0;
+    public bool HasImportDetails => ImportReport.Items.Count > 0;
+
+    private sealed class FilteredFiles : ObservableCollection<WorkspaceFile>
+    {
+        public void ReplaceWith(IEnumerable<WorkspaceFile> rows)
+        {
+            CheckReentrancy();
+            Items.Clear();
+            foreach (var row in rows) Items.Add(row);
+            OnPropertyChanged(new(nameof(Count)));
+            OnPropertyChanged(new("Item[]"));
+            OnCollectionChanged(new(System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+        }
+    }
+
+    private readonly FilteredFiles visibleFiles = [];
+    private int currentRowCount;
+    public ObservableCollection<WorkspaceFile> VisibleFiles => visibleFiles;
+    public IReadOnlyList<SearchFile> SearchEntries => allEntries ??= ResolveFiles(Guid.Empty);
+    public IReadOnlyList<SearchFile> SelectedEntries => collection.ResolveSelection(SelectedFolderIds, SelectedEntryIds).Select(entry => entry.File).ToArray();
+    public bool IsRefreshingFiles { get; private set; }
+    public IReadOnlyList<WorkspaceFile> SelectedRows => selectedFiles;
+    public int VisibleSelectedCount => selectedKeys.Count == 0 ? 0 : VisibleFiles.Count(IsRowSelected);
+    public event EventHandler? VisibleFilesRefreshed;
+    public static string RowKey(WorkspaceFile row) => row.EntryId is { } entry ? "e:" + entry.ToString("N")
+        : row.FolderId is { } folder ? "f:" + folder.ToString("N") : "p:" + row.FullPath;
+    public bool IsRowSelected(WorkspaceFile row) => selectedKeys.Count != 0 && selectedKeys.Contains(RowKey(row));
+    public void SetVisibleSelection(IReadOnlyList<WorkspaceFile> selection, WorkspaceFile? current = null)
+    {
+        if (IsRefreshingFiles) return;
+        if (selectedFiles.Count == 0) { SetSelection(selection, current); return; }
+        var visibleKeys = VisibleFiles.Select(RowKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var hidden = selectedFiles.Where(x => !visibleKeys.Contains(RowKey(x)));
+        SetSelection(hidden.Concat(selection).ToArray(), current);
+    }
+
+    public void SetSelection(IReadOnlyList<WorkspaceFile> selection, WorkspaceFile? current = null)
+    {
+        selectedFiles = selection.ToArray();
+        selectedKeys = selectedFiles.Select(RowKey).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        SelectionCount = selectedFiles.Count;
+        SelectedFile = current ?? selectedFiles.LastOrDefault();
+        OnPropertyChanged(nameof(SelectedEntries));
+        OnPropertyChanged(nameof(EffectiveEntries));
+        OnPropertyChanged(nameof(CanRenameFolder));
+        OnPropertyChanged(nameof(SelectedRows));
+        OnPropertyChanged(nameof(VisibleSelectedCount));
+    }
+    public bool HasSamples => files.Count != 0 && files[0].IsSample;
+    public string BatchOrigin => HasSamples ? "示例文件 · 不读取本地文件" : IsStaging ? "暂存引用 · 不改动原件" : "独立输入 · 不自动加入暂存区";
+    public string PreviewOrigin => SelectedFile?.IsSample != false ? "示例信息 · 未读取文件内容" : "真实文件信息 · 未加载内容预览";
+
+    public int AddSearchFiles(IReadOnlyList<SearchFile> entries)
+    {
+        var before = CollectionSnapshot;
+        LoadSamplesCommand.Cancel();
+        files.RemoveAll(f => f.IsSample);
+        var added = collection.AddFiles(CurrentFolderId, entries);
+        RememberChange(before, "加入文件");
+        HasError = false;
+        CollectionChanged();
+        return added;
+    }
+
+    // External drops and secondary launches can arrive while a previous read or profile restore is in flight.
+    internal async Task<FileImportReport> QueueImportPathsAsync(IReadOnlyList<string> paths, CancellationToken token)
+    {
+        var destination = CurrentFolderId;
+        while (IsLoading && loadingFinished is { } loading)
+            await loading.Task.WaitAsync(token);
+        token.ThrowIfCancellationRequested();
+        return await ImportPathsAsync(paths, destination);
+    }
+
+    partial void OnIsLoadingChanged(bool value)
+    {
+        if (value) loadingFinished = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        else
+        {
+            var finished = loadingFinished;
+            loadingFinished = null;
+            if (pendingPathChanges.Count > 0)
+            {
+                var changes = pendingPathChanges.ToArray();
+                pendingPathChanges.Clear();
+                foreach (var item in changes) ApplyPathChanges(item.Changes, item.Removed, item.Reason);
+            }
+            finished?.TrySetResult();
+        }
+    }
+
+    public Task<FileImportReport> ImportPathsAsync(IReadOnlyList<string> paths) => ImportPathsAsync(paths, CurrentFolderId);
+    public async Task<FileImportReport> ImportPathsAsync(IReadOnlyList<string> paths, Guid destination)
+    {
+        if (IsLoading) return new([], InputFeedback = "正在添加文件，请完成或取消后重试。");
+        if (paths.Count == 0) return new([], "没有选择文件。");
+        if (inputReader is null) throw new InvalidOperationException("File input reader is not configured.");
+        using var cancellation = new CancellationTokenSource();
+        importCancellation = cancellation;
+        var version = ++importGeneration;
+        IsLoading = true; HasError = false;
+        LoadingMessage = $"正在检查 {paths.Count:N0} 个文件或文件夹…";
+        try
+        {
+            var report = await inputReader.ReadAsync(paths, cancellation.Token);
+            if (version != importGeneration || cancellation.IsCancellationRequested) return new([], "已取消添加，列表保持不变。");
+            if (!collection.HasFolder(destination)) return new([], InputFeedback = "目标软件文件夹已不存在，添加已取消。");
+            var known = collection.Entries.Where(entry => entry.FolderId == destination).Select(entry => entry.File.FullPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var items = report.Items.Select(item => item.Status != FileImportStatus.Ready || item.File is null ? item
+                : known.Add(item.File.FullPath) ? item with { Status = FileImportStatus.Added }
+                : item with { Status = FileImportStatus.Duplicate, Reason = "当前列表已包含此路径。" }).ToArray();
+            var added = items.Where(item => item.Status == FileImportStatus.Added).Select(item => item.File!).ToArray();
+            if (added.Length > 0) { var before = CollectionSnapshot; collection.AddFiles(destination, added); RememberChange(before, "加入文件"); files.RemoveAll(file => file.IsSample); CollectionChanged(); }
+            ImportReport = new(items);
+            InputFeedback = ImportReport.Summary;
+            return ImportReport;
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        { return new([], "已取消添加，列表保持不变。"); }
+        catch (Exception)
+        {
+            var report = new FileImportReport([], "读取文件失败，原列表已保留。请检查路径和访问权限后重试。");
+            if (version == importGeneration) InputFeedback = report.Summary;
+            return report;
+        }
+        finally
+        {
+            if (version == importGeneration) { importCancellation = null; IsLoading = false; }
+        }
+    }
+
+    public Task<FileImportReport> ImportFilesAsync(IReadOnlyList<SearchFile> entries)
+        => ImportPathsAsync(entries.Select(entry => entry.FullPath).ToArray());
+
+    [ObservableProperty]
+    public partial string SearchText { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial int FilterIndex { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelection), nameof(ShowSelectionHint), nameof(ShowFloatingIsland), nameof(SelectionSummary), nameof(PreviewName),
+        nameof(PreviewType), nameof(PreviewSize), nameof(PreviewPath), nameof(PreviewDate), nameof(PreviewGlyph), nameof(PreviewOrigin), nameof(PreviewFile), nameof(PreviewStatus), nameof(HasPreviewStatus))]
+    public partial WorkspaceFile? SelectedFile { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectionSummary), nameof(CanExportSelection), nameof(SendSelectedLabel), nameof(SendSelectedToConversionLabel),
+        nameof(SendSelectedToNamingLabel), nameof(HasMultipleSelection), nameof(HasSingleSelection), nameof(SelectedTotalSizeLabel), nameof(IslandSummary), nameof(MultiSelectionBreakdown))]
+    public partial int SelectionCount { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowEmpty), nameof(ShowNoResults), nameof(ShowList), nameof(HasFiles), nameof(CanEditList), nameof(CanReceiveFiles), nameof(CanExportSelection), nameof(CanExportAll), nameof(CanGoUp), nameof(CanRenameFolder), nameof(CanCancelLoading))]
+    [NotifyCanExecuteChangedFor(nameof(CancelLoadingCommand))]
+    [NotifyPropertyChangedFor(nameof(CanUndo))]
+    [NotifyCanExecuteChangedFor(nameof(UndoCommand))]
+    public partial bool IsLoading { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowEmpty), nameof(ShowNoResults), nameof(ShowList))]
+    public partial bool HasError { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsQueueExpanded { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowEmptyQueue))]
+    public partial bool IsTaskExample { get; set; }
+
+    public bool HasFiles => files.Count > 0 || collection.Folders.Count > 0;
+    public bool CanEditList => HasFiles && !IsLoading;
+    public bool HasSelection => SelectedFile is not null;
+    public bool ShowSelectionHint => !HasSelection;
+    public bool ShowEmpty => !HasCurrentItems && !IsLoading && !HasError;
+    public bool ShowNoResults => HasCurrentItems && VisibleFiles.Count == 0 && !IsLoading && !HasError;
+    public bool ShowList => VisibleFiles.Count > 0 && !IsLoading && !HasError;
+    public bool ShowEmptyQueue => !IsTaskExample;
+    public string BatchSummary => HasFiles ? collection.Folders.Count > 0
+        ? $"当前文件夹含 {ScopeEntries.Count:N0} 个文件引用 · 全部 {SearchEntries.Count:N0} 个不同路径 · {collection.Folders.Count:N0} 个软件文件夹"
+        : $"{files.Count} 项{(HasSamples ? "示例" : "文件或文件夹")} · 已知大小 {WorkspaceFile.FormatSize(files.Where(file => file.Size >= 0).Sum(file => file.Size))}" : InputDescription;
+    public string ListSummary => $"{VisibleFiles.Count} / {currentRowCount} 项";
+    public string SelectionSummary => SelectionCount == 0 ? HasSamples ? "未勾选示例" : $"未勾选 · 当前文件夹及子文件夹共 {ScopeEntries.Count:N0} 项"
+        : SelectedScopeSummary;
+    public string SelectedScopeSummary
+    {
+        get
+        {
+            var visible = VisibleSelectedCount;
+            var hidden = Math.Max(0, SelectionCount - visible);
+            var selected = $"已选 {SelectionCount:N0} 项";
+            if (hidden > 0) selected += $"（当前可见 {visible:N0}，{hidden:N0} 项未显示）";
+            if (SelectedFolderIds.Count > 0)
+                selected += SelectedEntries.Count == 0 ? " · 所选文件夹为空" : $" · 展开后 {SelectedEntries.Count:N0} 项";
+            return selected;
+        }
+    }
+    public string PreviewName => SelectedFile?.Name ?? "选择一个文件";
+    public string PreviewType => SelectedFile?.Type ?? string.Empty;
+    public string PreviewSize => SelectedFile?.SizeLabel ?? string.Empty;
+    public string PreviewPath => SelectedFile?.FullPath ?? string.Empty;
+    public string PreviewDate => SelectedFile?.Modified ?? string.Empty;
+    public string PreviewStatus => SelectedFile?.ReferenceError ?? (SelectedFile?.IsCollectionFolder == true ? "软件内的文件引用分组。磁盘原件留在原位置。" : string.Empty);
+    public bool HasPreviewStatus => PreviewStatus.Length > 0;
+    public string PreviewGlyph => SelectedFile?.Glyph ?? "\uE8A5";
+    public SearchFile? PreviewFile => SelectedFile?.ReferenceError is null ? SelectedFile?.Source : null;
+
+    partial void OnSearchTextChanged(string value) => ApplyFilters(preserveSelection: true);
+    partial void OnFilterIndexChanged(int value) => ApplyFilters(preserveSelection: true);
+
+    [RelayCommand]
+    private async Task LoadSamplesAsync(string? mode, CancellationToken cancellationToken)
+    {
+        if (IsLoading || collection.Folders.Count > 0 || files.Any(f => !f.IsSample)) return;
+        var version = ++importGeneration;
+        HasError = false;
+        IsLoading = true;
+        LoadingMessage = "正在载入示例文件…";
+        try
+        {
+            // Intentional delay makes loading and cancellation reviewable.
+            await Task.Delay(mode == "slow" ? 4000 : 700, cancellationToken);
+            if (version != importGeneration) return;
+            files.Clear();
+            files.AddRange(WorkspaceSamples.Create());
+            SearchText = string.Empty;
+            FilterIndex = 0;
+            ApplyFilters();
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation leaves the existing batch untouched.
+        }
+        finally
+        {
+            if (version == importGeneration) { IsLoading = false; NotifyFileState(); }
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCancelLoading))]
+    private void CancelLoading()
+    {
+        // Restoring persisted references must finish before edits are accepted.
+        if (restoringCollection) return;
+        ++importGeneration;
+        importCancellation?.Cancel(); importCancellation = null;
+        LoadSamplesCommand.Cancel();
+        IsLoading = false;
+        InputFeedback = "已取消添加，原列表已保留。";
+    }
+
+    [RelayCommand]
+    private void Clear()
+    {
+        if (restoringCollection) return;
+        var before = CollectionSnapshot;
+        CancelLoading();
+        files.Clear();
+        collection.ClearFiles(CurrentFolderId);
+        RememberChange(before, "清空当前文件夹");
+        SearchText = string.Empty;
+        FilterIndex = 0;
+        HasError = false;
+        InputFeedback = string.Empty; ImportReport = FileImportReport.Empty;
+        CollectionChanged();
+    }
+
+    [RelayCommand]
+    private void ResetFilters()
+    {
+        SearchText = string.Empty;
+        FilterIndex = 0;
+    }
+
+    [RelayCommand]
+    private void ShowError()
+    {
+        LoadSamplesCommand.Cancel();
+        HasError = true;
+    }
+
+    [RelayCommand]
+    private void DismissError() => HasError = false;
+
+    [RelayCommand]
+    private void ShowTaskExample()
+    {
+        IsTaskExample = true;
+        IsQueueExpanded = true;
+    }
+
+    [RelayCommand]
+    private void CloseTaskExample() => IsTaskExample = false;
+
+    public void RemoveFromList(IEnumerable<WorkspaceFile> selection)
+    {
+        var before = CollectionSnapshot;
+        var chosen = selection.ToArray();
+        foreach (var file in chosen.Where(file => file.IsSample)) files.Remove(file);
+        collection.Remove(chosen.Where(file => file.FolderId is not null).Select(file => file.FolderId!.Value), chosen.Where(file => file.EntryId is not null).Select(file => file.EntryId!.Value));
+        RememberChange(before, "移出列表");
+        CollectionChanged();
+    }
+
+    public WorkspaceSortField SortField { get; private set; }
+    public bool SortDescending { get; private set; }
+    public string NameSortGlyph => SortField == WorkspaceSortField.Name ? (SortDescending ? "\uE74B" : "\uE74A") : string.Empty;
+    public string TypeSortGlyph => SortField == WorkspaceSortField.Type ? (SortDescending ? "\uE74B" : "\uE74A") : string.Empty;
+    public string SizeSortGlyph => SortField == WorkspaceSortField.Size ? (SortDescending ? "\uE74B" : "\uE74A") : string.Empty;
+
+    public void ToggleSort(WorkspaceSortField field)
+    {
+        if (field == WorkspaceSortField.Default)
+        {
+            SortField = WorkspaceSortField.Default;
+            SortDescending = false;
+        }
+        else if (SortField != field)
+        {
+            SortField = field;
+            SortDescending = field == WorkspaceSortField.Size;
+        }
+        else if (field == WorkspaceSortField.Size ? SortDescending : !SortDescending)
+        {
+            SortDescending = !SortDescending;
+        }
+        else
+        {
+            SortField = WorkspaceSortField.Default;
+            SortDescending = false;
+        }
+
+        ApplyFilters(preserveSelection: true);
+        OnPropertyChanged(nameof(SortField));
+        OnPropertyChanged(nameof(SortDescending));
+        OnPropertyChanged(nameof(NameSortGlyph));
+        OnPropertyChanged(nameof(TypeSortGlyph));
+        OnPropertyChanged(nameof(SizeSortGlyph));
+    }
+
+    private void ApplyFilters(bool preserveSelection = false)
+    {
+        IsRefreshingFiles = true;
+        try
+        {
+            if (!preserveSelection) SetSelection([]);
+            var query = SearchText.Trim();
+            var typeFilter = SearchRules.Compile(new SearchRequest { Kind = (SearchKind)FilterIndex });
+            currentRowCount = 0;
+            var filtered = CurrentRows().Where(file =>
+            {
+                currentRowCount++;
+                if (query.Length != 0 && !file.Name.Contains(query, StringComparison.OrdinalIgnoreCase) &&
+                    !file.Directory.Contains(query, StringComparison.OrdinalIgnoreCase)) return false;
+                if (file.IsCollectionFolder) return FilterIndex is (int)SearchKind.All or (int)SearchKind.Folders;
+                return FilterIndex == (int)SearchKind.All || typeFilter.Matches(file.Source ?? new SearchFile(file.FullPath, false, file.Size, null));
+            });
+
+            if (SortField != WorkspaceSortField.Default)
+            {
+                var groups = filtered.OrderBy(file => file.IsCollectionFolder ? 0 : 1);
+                filtered = (SortField, SortDescending) switch
+                {
+                    (WorkspaceSortField.Name, false) => groups.ThenBy(file => file.Name, StringComparer.CurrentCultureIgnoreCase),
+                    (WorkspaceSortField.Name, true) => groups.ThenByDescending(file => file.Name, StringComparer.CurrentCultureIgnoreCase),
+                    (WorkspaceSortField.Type, false) => groups.ThenBy(file => file.Type, StringComparer.CurrentCultureIgnoreCase).ThenBy(file => file.Name, StringComparer.CurrentCultureIgnoreCase),
+                    (WorkspaceSortField.Type, true) => groups.ThenByDescending(file => file.Type, StringComparer.CurrentCultureIgnoreCase).ThenBy(file => file.Name, StringComparer.CurrentCultureIgnoreCase),
+                    (WorkspaceSortField.Size, false) => groups.ThenBy(file => file.Size).ThenBy(file => file.Name, StringComparer.CurrentCultureIgnoreCase),
+                    (WorkspaceSortField.Size, true) => groups.ThenByDescending(file => file.Size).ThenBy(file => file.Name, StringComparer.CurrentCultureIgnoreCase),
+                    _ => filtered
+                };
+            }
+
+            visibleFiles.ReplaceWith(filtered);
+        }
+        finally { IsRefreshingFiles = false; }
+        OnPropertyChanged(nameof(VisibleSelectedCount));
+        VisibleFilesRefreshed?.Invoke(this, EventArgs.Empty);
+        NotifyFileState();
+    }
+
+    private void NotifyFileState()
+    {
+        OnPropertyChanged(nameof(HasSamples));
+        OnPropertyChanged(nameof(BatchOrigin));
+        OnPropertyChanged(nameof(HasFiles));
+        OnPropertyChanged(nameof(CanEditList));
+        OnPropertyChanged(nameof(ShowEmpty));
+        OnPropertyChanged(nameof(ShowNoResults));
+        OnPropertyChanged(nameof(ShowList));
+        OnPropertyChanged(nameof(ShowFloatingIsland));
+        OnPropertyChanged(nameof(BatchSummary));
+        OnPropertyChanged(nameof(ListSummary));
+        OnPropertyChanged(nameof(SelectionSummary));
+        OnPropertyChanged(nameof(CanExportSelection));
+        OnPropertyChanged(nameof(CanExportAll));
+        OnPropertyChanged(nameof(SendAllLabel));
+        OnPropertyChanged(nameof(SendAllToConversionLabel));
+        OnPropertyChanged(nameof(SendAllToNamingLabel));
+        OnPropertyChanged(nameof(TotalReferenceCount));
+        OnPropertyChanged(nameof(HasAnyReferences));
+        OnPropertyChanged(nameof(HasCustomFolders));
+        OnPropertyChanged(nameof(CustomFolderCount));
+    }
+}

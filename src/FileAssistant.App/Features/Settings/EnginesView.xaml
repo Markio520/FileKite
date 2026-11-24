@@ -1,0 +1,19 @@
+<UserControl
+    x:Class="FileAssistant.App.Features.Settings.EnginesView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel Spacing="7">
+        <StackPanel x:Name="Rows" Spacing="4" />
+        <Border x:Name="FeedbackPanel" Visibility="Collapsed" Background="{ThemeResource WorkspaceCardBrush}"
+                BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14,10">
+            <StackPanel Spacing="5">
+                <TextBlock x:Name="FeedbackText" TextWrapping="Wrap" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+                <Grid x:Name="ProgressArea" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <ProgressBar x:Name="DownloadProgress" Minimum="0" Maximum="100" VerticalAlignment="Center" />
+                    <Button x:Name="CancelDownload" Grid.Column="1" FontSize="12" MinHeight="28" Padding="10,3" Click="Cancel_Click" />
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

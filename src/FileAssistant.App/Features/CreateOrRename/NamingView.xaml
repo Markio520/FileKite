@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?><UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:input="using:FileAssistant.App.Features.FileInput" xmlns:local="using:FileAssistant.App.Features.CreateOrRename" xmlns:controls="using:FileAssistant.App.Controls" x:Class="FileAssistant.App.Features.CreateOrRename.NamingView">
+    <input:FileInputView x:Name="InputView" ViewModel="{x:Bind ViewModel.Input}" InputEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" OperationTitle="{x:Bind ViewModel.PanelTitle, Mode=OneWay}" ShowAlternateContent="{x:Bind ViewModel.IsCreate, Mode=OneWay}" ShowAlternateFolders="{x:Bind ViewModel.IsCreate, Mode=OneWay}" SearchRequested="Input_SearchRequested" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForConversionRequested="Input_FilesForConversionRequested">
+        <input:FileInputView.HeaderContent>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <ToggleButton Content="改名" IsChecked="{x:Bind ViewModel.IsRename, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" Click="Rename_Click" Style="{StaticResource WorkspaceToolbarModeStyle}"/>
+                <ToggleButton Content="创建" IsChecked="{x:Bind ViewModel.IsCreate, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" Click="Create_Click" Style="{StaticResource WorkspaceToolbarModeStyle}"/>
+            </StackPanel>
+        </input:FileInputView.HeaderContent>
+        <input:FileInputView.AlternateHeaderActions>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <controls:ActionDropDown Content="批量选择" Style="{StaticResource WorkspaceToolbarMenuStyle}" AutomationProperties.Name="批量选择添加位置" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}">
+                    <controls:ActionDropDown.Flyout><MenuFlyout>
+                        <MenuFlyoutItem Text="手动勾选文件夹" Command="{x:Bind ViewModel.ChooseCreationTargetsCommand}" />
+                        <MenuFlyoutItem Text="选中本层子文件夹" Command="{x:Bind ViewModel.SelectDirectChildrenCommand}" />
+                        <MenuFlyoutItem Text="选中所有末级文件夹" Command="{x:Bind ViewModel.SelectLeafFoldersCommand}" />
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem Text="仅在当前文件夹添加" Command="{x:Bind ViewModel.UseCurrentCreationFolderCommand}" />
+                    </MenuFlyout></controls:ActionDropDown.Flyout>
+                </controls:ActionDropDown>
+                <controls:AddFilesButton FolderOnly="True" FolderRequested="PickDestination_Click"/>
+            </StackPanel>
+        </input:FileInputView.AlternateHeaderActions>
+        <input:FileInputView.OperationContent><local:NamingOptionsView FilesForConversionRequested="Input_FilesForConversionRequested" FilesForCopyRequested="Input_FilesForCopyRequested" /></input:FileInputView.OperationContent>
+        <input:FileInputView.AlternateContent><local:NamingCreationPreviewView/></input:FileInputView.AlternateContent>
+        <input:FileInputView.AlternateFolderContent><local:NamingDirectoryTreeView/></input:FileInputView.AlternateFolderContent>
+    </input:FileInputView>
+</UserControl>

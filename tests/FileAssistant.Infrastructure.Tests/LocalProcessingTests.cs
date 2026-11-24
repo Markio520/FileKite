@@ -1,0 +1,318 @@
+﻿using System.Diagnostics;
+using System.Security.Cryptography;
+using FileAssistant.Core.Engines;
+using FileAssistant.Infrastructure.Engines;
+using ImageMagick;
+
+namespace FileAssistant.Infrastructure.Tests;
+
+public sealed class LocalProcessingTests : IDisposable
+{
+    private readonly string root = Path.Combine(Path.GetTempPath(), "FileAssistant-engine-tests-" + Guid.NewGuid().ToString("N"));
+    private readonly LocalFileProcessingService service;
+    private readonly string ffmpeg;
+
+    public LocalProcessingTests()
+    {
+        Directory.CreateDirectory(root);
+        var repository = new DirectoryInfo(AppContext.BaseDirectory);
+        while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "FileAssistant.slnx"))) repository = repository.Parent;
+        if (repository is null) throw new InvalidOperationException("Test repository not found.");
+        ffmpeg = Path.Combine(repository.FullName, "artifacts", "dependencies", "ffmpeg", "8.1.3-9-g29e619e767", "x64", "bundle", "bin", "ffmpeg.exe");
+        service = new(new(ffmpeg, Path.Combine(root, "cache")));
+    }
+
+    private string Image(string name, IMagickColor<ushort>? color = null)
+    {
+        var path = Path.Combine(root, name);
+        using var image = new MagickImage(color ?? MagickColors.Red, 80, 40);
+        image.Write(path, MagickFormat.Png);
+        return path;
+    }
+
+    private string MacMetadata(string name)
+    {
+        var path = Path.Combine(root, name);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        // AppleDouble v2 with one 32-byte Finder Info entry.
+        var bytes = Convert.FromHexString("00051607000200004D6163204F53205820202020202020200001000000090000002600000020")
+            .Concat(new byte[32]).ToArray();
+        File.WriteAllBytes(path, bytes);
+        return path;
+    }
+
+    [Theory]
+    [InlineData("._1.jpg")]
+    [InlineData("__MACOSX/LS8184/._1.jpg")]
+    [InlineData("renamed.png")]
+    [InlineData("._report.pdf")]
+    [InlineData("._clip.mp4")]
+    [InlineData("._notes.txt")]
+    public async Task AppleDouble_metadata_has_an_actionable_error_before_preview_or_conversion(string name)
+    {
+        var source = MacMetadata(name);
+        var original = await File.ReadAllBytesAsync(source);
+        var plan = await service.CreatePlanAsync(new([source], Path.Combine(root, "out"), ConversionTarget.Png), default);
+        Assert.Equal(0, plan.ReadyCount);
+        Assert.Equal(1, plan.RejectedCount);
+        var item = Assert.Single(plan.Items);
+        Assert.Contains("macOS", item.Error);
+        Assert.Contains("原文件", item.Error);
+        Assert.Contains(Path.GetFileName(source), item.Error);
+        var error = await Assert.ThrowsAsync<FileProcessingException>(() => service.PreviewAsync(source, 256, default));
+        Assert.Equal(item.Error, error.Message);
+        Assert.Empty((await service.ConvertAsync(plan, null, default)).Outputs);
+        Assert.False(Directory.Exists(plan.Request.OutputDirectory));
+        Assert.Equal(original, await File.ReadAllBytesAsync(source));
+    }
+
+    [Theory]
+    [InlineData("._photo.jpg")]
+    [InlineData("__MACOSX/photo.jpg")]
+    [InlineData("__MACOSX/._photo.jpg")]
+    public async Task Real_images_with_metadata_like_names_still_convert_in_a_mixed_batch(string name)
+    {
+        var source = Path.Combine(root, name);
+        Directory.CreateDirectory(Path.GetDirectoryName(source)!);
+        using (var image = new MagickImage(MagickColors.Blue, 80, 40)) image.Write(source, MagickFormat.Jpeg);
+        var metadata = MacMetadata("metadata.jpg");
+        var original = await File.ReadAllBytesAsync(source);
+        Assert.Equal(PreviewKind.Image, (await service.PreviewAsync(source, 256, default)).Kind);
+        var plan = await service.CreatePlanAsync(new([metadata, source], Path.Combine(root, "out"), ConversionTarget.Png), default);
+        Assert.Equal(1, plan.ReadyCount);
+        Assert.Equal(1, plan.RejectedCount);
+        Assert.Contains("macOS", Assert.Single(plan.Items, item => !item.CanRun).Error);
+        var output = Assert.Single((await service.ConvertAsync(plan, null, default)).Outputs);
+        Assert.Equal(Path.GetFullPath(source), Assert.Single(output.SourcePaths));
+        using var decoded = new MagickImage(output.FullPath);
+        Assert.Equal(MagickFormat.Png, decoded.Format);
+        Assert.Equal(80u, decoded.Width);
+        Assert.Equal(original, await File.ReadAllBytesAsync(source));
+    }
+
+    [Theory]
+    [InlineData("", "文件可能损坏或格式不支持")]
+    [InlineData("not a JPEG", "无法读取图片")]
+    public async Task Invalid_images_have_readable_errors_without_decoder_diagnostics(string contents, string previewMessage)
+    {
+        var source = Path.Combine(root, "broken.jpg");
+        await File.WriteAllTextAsync(source, contents);
+        var plan = await service.CreatePlanAsync(new([source], Path.Combine(root, "out"), ConversionTarget.Png), default);
+        Assert.Equal(0, plan.ReadyCount);
+        Assert.Contains("无法读取图片", Assert.Single(plan.Items).Error);
+        Assert.DoesNotContain("error/jpeg", plan.Items[0].Error);
+        var error = await Assert.ThrowsAsync<FileProcessingException>(() => service.PreviewAsync(source, 256, default));
+        Assert.Contains(previewMessage, error.Message);
+        Assert.DoesNotContain("error/jpeg", error.Message);
+        Assert.False(Directory.Exists(plan.Request.OutputDirectory));
+    }
+
+    [Fact]
+    public async Task Jpeg_thumbnail_respects_orientation_and_conversion_keeps_full_resolution()
+    {
+        var source = Path.Combine(root, "竖拍.jpg");
+        using (var original = new MagickImage(MagickColors.Red, 2400, 1600))
+        {
+            var exif = new ExifProfile();
+            exif.SetValue(ExifTag.Orientation, (ushort)6);
+            original.SetProfile(exif);
+            original.Orientation = Orientation.RightTop;
+            original.Write(source, MagickFormat.Jpeg);
+        }
+        using (var input = new MagickImage(source)) Assert.Equal(Orientation.RightTop, input.Orientation);
+
+        var preview = await service.PreviewAsync(source, 300, default);
+        using (var image = new MagickImage(preview.Png!))
+            Assert.Equal((200u, 300u), (image.Width, image.Height));
+
+        var plan = await service.CreatePlanAsync(new([source], Path.Combine(root, "converted"), ConversionTarget.Png), default);
+        var report = await service.ConvertAsync(plan, null, default);
+        var full = new MagickImageInfo(Assert.Single(report.Outputs).FullPath);
+        Assert.Equal((1600u, 2400u), (full.Width, full.Height));
+    }
+
+    [Fact]
+    public async Task Preview_and_all_image_targets_are_real_files_and_keep_originals()
+    {
+        var source = Image("中文 空格 & 原件.png");
+        var original = SHA256.HashData(await File.ReadAllBytesAsync(source));
+        var preview = await service.PreviewAsync(source, 256, default);
+        Assert.Equal(PreviewKind.Image, preview.Kind);
+        using (var decoded = new MagickImage(preview.Png!)) { Assert.Equal(80u, decoded.Width); Assert.Equal(40u, decoded.Height); }
+        foreach (var target in new[] { ConversionTarget.Png, ConversionTarget.Jpeg, ConversionTarget.WebP, ConversionTarget.Bmp, ConversionTarget.Tiff, ConversionTarget.Gif, ConversionTarget.Avif })
+        {
+            var plan = await service.CreatePlanAsync(new([source], Path.Combine(root, target.ToString()), target), default);
+            Assert.False(Directory.Exists(plan.Request.OutputDirectory));
+            var report = await service.ConvertAsync(plan, null, default);
+            var output = Assert.Single(report.Outputs);
+            using var decoded = new MagickImage(output.FullPath);
+            Assert.Equal(80u, decoded.Width);
+            Assert.Equal(40u, decoded.Height);
+            Assert.NotEqual(source, output.FullPath);
+            var previewOutput = await service.PreviewAsync(output.FullPath, 128, default);
+            Assert.Equal(PreviewKind.Image, previewOutput.Kind);
+        }
+        Assert.Equal(original, SHA256.HashData(await File.ReadAllBytesAsync(source)));
+    }
+
+    [Theory]
+    [InlineData(ConversionTarget.Tiff)]
+    [InlineData(ConversionTarget.Gif)]
+    [InlineData(ConversionTarget.Avif)]
+    public async Task Pdf_pages_can_use_the_new_image_encoders(ConversionTarget target)
+    {
+        var source = Image("source.png");
+        var pdfPlan = await service.CreatePlanAsync(new([source], Path.Combine(root, "pdf"), ConversionTarget.Pdf), default);
+        var pdf = Assert.Single((await service.ConvertAsync(pdfPlan, null, default)).Outputs);
+        var hash = SHA256.HashData(await File.ReadAllBytesAsync(pdf.FullPath));
+        var plan = await service.CreatePlanAsync(new([pdf.FullPath], Path.Combine(root, "pages"), target, PdfDpi: 72), default);
+        var output = Assert.Single((await service.ConvertAsync(plan, null, default)).Outputs);
+        Assert.Equal(ConversionCapabilities.Extension(target), Path.GetExtension(output.FullPath));
+        Assert.Equal(PreviewKind.Image, (await service.PreviewAsync(output.FullPath, 128, default)).Kind);
+        Assert.Equal(hash, SHA256.HashData(await File.ReadAllBytesAsync(pdf.FullPath)));
+    }
+
+    [Fact]
+    public async Task Missing_document_engine_is_reported_without_creating_an_installation_or_output()
+    {
+        var source = Path.Combine(root, "notes.txt"); await File.WriteAllTextAsync(source, "text");
+        var plan = await service.CreatePlanAsync(new([source], Path.Combine(root, "out"), ConversionTarget.Docx), default);
+        Assert.Equal(0, plan.ReadyCount); Assert.Equal(1, plan.RejectedCount);
+        Assert.Contains("文档引擎", plan.Items[0].Error);
+        Assert.False(Directory.Exists(plan.Request.OutputDirectory));
+    }
+
+    [Fact]
+    public async Task Images_to_pdf_and_pdf_to_pages_share_the_local_pdf_engine()
+    {
+        var first = Image("first.png");
+        var second = Image("second.png", MagickColors.Blue);
+        var pdfPlan = await service.CreatePlanAsync(new([first, second], Path.Combine(root, "pdf"), ConversionTarget.Pdf), default);
+        var pdf = Assert.Single((await service.ConvertAsync(pdfPlan, null, default)).Outputs);
+        Assert.Equal(2, pdf.SourcePaths.Count);
+        Assert.Equal("%PDF", System.Text.Encoding.ASCII.GetString((await File.ReadAllBytesAsync(pdf.FullPath)).Take(4).ToArray()));
+        var preview = await service.PreviewAsync(pdf.FullPath, 300, default);
+        Assert.Equal(PreviewKind.Pdf, preview.Kind);
+        using (var image = new MagickImage(preview.Png!)) Assert.InRange(image.Width, 1u, 300u);
+        var export = await service.CreatePlanAsync(new([pdf.FullPath], Path.Combine(root, "pages"), ConversionTarget.Png, PdfDpi: 72), default);
+        Assert.Equal(2, export.ReadyCount);
+        var report = await service.ConvertAsync(export, null, default);
+        Assert.Equal(2, report.Outputs.Count);
+        for (var index = 0; index < report.Outputs.Count; index++)
+        {
+            using var image = new MagickImage(report.Outputs[index].FullPath);
+            using var pixels = image.GetPixels();
+            var center = pixels.GetPixel((int)image.Width / 2, (int)image.Height / 2).ToColor()!;
+            Assert.True(index == 0 ? center.R > center.B * 2 : center.B > center.R * 2);
+        }
+    }
+
+    [Fact]
+    public async Task Output_collision_and_input_changes_after_preview_never_overwrite_files()
+    {
+        var source = Image("same.png");
+        var original = await File.ReadAllBytesAsync(source);
+        var plan = await service.CreatePlanAsync(new([source], root, ConversionTarget.Png), default);
+        var item = Assert.Single(plan.Items);
+        Assert.NotEqual(source, item.OutputPath);
+        await File.WriteAllTextAsync(item.OutputPath!, "created after preview");
+        var report = await service.ConvertAsync(plan, null, default);
+        Assert.Empty(report.Outputs);
+        Assert.Equal("created after preview", await File.ReadAllTextAsync(item.OutputPath!));
+        Assert.Equal(original, await File.ReadAllBytesAsync(source));
+        var next = await service.CreatePlanAsync(new([source], Path.Combine(root, "changed"), ConversionTarget.Jpeg), default);
+        await File.AppendAllTextAsync(source, "changed");
+        Assert.Empty((await service.ConvertAsync(next, null, default)).Outputs);
+        Assert.False(Directory.Exists(next.Request.OutputDirectory));
+    }
+
+    [Fact]
+    public async Task Bad_inputs_and_cancellation_preserve_completed_outputs_without_temp_files()
+    {
+        var first = Image("one.png");
+        var second = Image("two.png");
+        var unsupported = Path.Combine(root, "not-an-image.txt");
+        await File.WriteAllTextAsync(unsupported, "text");
+        var plan = await service.CreatePlanAsync(new([first, unsupported, second], Path.Combine(root, "cancel"), ConversionTarget.WebP), default);
+        Assert.Equal(1, plan.RejectedCount);
+        using var cancellation = new CancellationTokenSource();
+        var progress = new InlineProgress(value => { if (value.Completed == 1) cancellation.Cancel(); });
+        var report = await service.ConvertAsync(plan, progress, cancellation.Token);
+        Assert.True(report.Cancelled);
+        Assert.Single(report.Outputs);
+        Assert.Empty(Directory.GetFiles(plan.Request.OutputDirectory, "*.tmp"));
+        Assert.True(File.Exists(first)); Assert.True(File.Exists(second));
+    }
+
+    [Fact]
+    public async Task Mixed_png_and_webp_convert_to_real_jpegs_without_changing_the_sources()
+    {
+        var png = Image("输入.png");
+        var webp = Path.Combine(root, "输入.webp");
+        using (var image = new MagickImage(MagickColors.Blue, 64, 40)) image.Write(webp, MagickFormat.WebP);
+        var originals = new[] { SHA256.HashData(await File.ReadAllBytesAsync(png)), SHA256.HashData(await File.ReadAllBytesAsync(webp)) };
+        Assert.Contains(ConversionTarget.Jpeg, ConversionCapabilities.GetCommonTargets([png, webp]));
+        var plan = await service.CreatePlanAsync(new([png, webp], Path.Combine(root, "mixed"), ConversionTarget.Jpeg), default);
+        var report = await service.ConvertAsync(plan, null, default);
+        Assert.Equal(2, report.Outputs.Count);
+        Assert.NotEqual(report.Outputs[0].FullPath, report.Outputs[1].FullPath);
+        foreach (var output in report.Outputs)
+        {
+            using var image = new MagickImage(output.FullPath);
+            Assert.Equal(MagickFormat.Jpeg, image.Format);
+            Assert.Single(output.SourcePaths);
+        }
+        Assert.Equal(originals[0], SHA256.HashData(await File.ReadAllBytesAsync(png)));
+        Assert.Equal(originals[1], SHA256.HashData(await File.ReadAllBytesAsync(webp)));
+    }
+
+    [Fact]
+    public async Task Video_preview_is_the_first_decoded_frame_and_requires_no_network()
+    {
+        Assert.True(File.Exists(ffmpeg), "Run scripts/restore-processing-engines.ps1 before engine tests.");
+        var video = Path.Combine(root, "首帧 视频.mkv");
+        var start = new ProcessStartInfo(ffmpeg) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true };
+        foreach (var argument in new[] { "-nostdin", "-v", "error", "-f", "lavfi", "-i", "color=c=red:s=64x32:r=1:d=1", "-f", "lavfi", "-i", "color=c=blue:s=64x32:r=1:d=1", "-filter_complex", "[0:v][1:v]concat=n=2:v=1:a=0[out]", "-map", "[out]", "-c:v", "ffv1", video }) start.ArgumentList.Add(argument);
+        using var process = Process.Start(start)!;
+        var errors = process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        Assert.Equal(0, process.ExitCode);
+        Assert.Equal(string.Empty, await errors);
+        var preview = await service.PreviewAsync(video, 256, default);
+        Assert.Equal(PreviewKind.Video, preview.Kind);
+        using var image = new MagickImage(preview.Png!);
+        using var pixels = image.GetPixels();
+        var color = pixels.GetPixel(10, 10).ToColor()!;
+        Assert.True(color.R > color.B * 2);
+    }
+
+    [Fact]
+    public async Task Transparent_pixels_become_white_in_jpeg_without_changing_the_source()
+    {
+        var source = Image("transparent.png", MagickColors.Transparent);
+        var plan = await service.CreatePlanAsync(new([source], Path.Combine(root, "white"), ConversionTarget.Jpeg), default);
+        var file = Assert.Single((await service.ConvertAsync(plan, null, default)).Outputs);
+        using var image = new MagickImage(file.FullPath);
+        using var pixels = image.GetPixels();
+        var white = pixels.GetPixel(10, 10).ToColor()!;
+        Assert.True(white.R > 64_000 && white.G > 64_000 && white.B > 64_000);
+        using var original = new MagickImage(source);
+        Assert.True(original.HasAlpha);
+    }
+
+    [Fact]
+    public async Task Remote_paths_and_disguised_image_documents_are_rejected()
+    {
+        await Assert.ThrowsAsync<FileProcessingException>(() => service.PreviewAsync("https://example.invalid/file.png", 256, default));
+        var plan = await service.CreatePlanAsync(new(["https://example.invalid/file.png"], Path.Combine(root, "remote"), ConversionTarget.Png), default);
+        Assert.Equal(0, plan.ReadyCount); Assert.Equal(1, plan.RejectedCount);
+        var disguised = Path.Combine(root, "actually-svg.png");
+        await File.WriteAllTextAsync(disguised, "<svg xmlns='http://www.w3.org/2000/svg'><image href='https://example.invalid/a.png'/></svg>");
+        await Assert.ThrowsAsync<FileProcessingException>(() => service.PreviewAsync(disguised, 256, default));
+        Assert.False(Directory.Exists(plan.Request.OutputDirectory));
+    }
+
+    private sealed class InlineProgress(Action<ProcessingProgress> report) : IProgress<ProcessingProgress>
+    { public void Report(ProcessingProgress value) => report(value); }
+    public void Dispose() { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+}

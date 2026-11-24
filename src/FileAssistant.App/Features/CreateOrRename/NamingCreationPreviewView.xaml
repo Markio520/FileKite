@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="FileAssistant.App.Features.CreateOrRename.NamingCreationPreviewView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileAssistant.App.Features.CreateOrRename"
+    xmlns:controls="using:FileAssistant.App.Controls">
+    <Border Style="{StaticResource WorkspaceSurfaceStyle}" Background="Transparent">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Row 0: Unified Breadcrumb Path Bar + Outline Quick Actions (moved cleanly from old second bar) -->
+            <Grid Style="{StaticResource WorkspacePathBarStyle}" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Command="{x:Bind ViewModel.BrowseCreationParentCommand}" Style="{StaticResource WorkspaceIconButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="返回上一级目录" ToolTipService.ToolTip="返回上一级目录">
+                    <FontIcon Style="{StaticResource WorkspaceParentFolderIconStyle}" />
+                </Button>
+                <FontIcon Grid.Column="1" Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource WorkspaceCategoryFolderBrush}" VerticalAlignment="Center" />
+                <BreadcrumbBar Grid.Column="2" ItemsSource="{x:Bind ViewModel.CreationBreadcrumbs, Mode=OneWay}" ItemClicked="CreationBreadcrumb_Click" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" VerticalAlignment="Center" AutomationProperties.Name="当前创建目录路径">
+                    <BreadcrumbBar.ItemTemplate>
+                        <DataTemplate x:DataType="local:CreationBreadcrumb">
+                            <controls:BreadcrumbLabel>
+                                <TextBlock Text="{x:Bind Name}" ToolTipService.ToolTip="{x:Bind Name}" MaxWidth="160" Style="{StaticResource WorkspaceFolderNameStyle}" FontWeight="Normal" />
+                            </controls:BreadcrumbLabel>
+                        </DataTemplate>
+                    </BreadcrumbBar.ItemTemplate>
+                </BreadcrumbBar>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                    <Button x:Name="AddOutlineLineButton" Click="AddLine_Click" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" Style="{StaticResource OpPillButtonStyle}" ToolTipService.ToolTip="新增一行待创建项 (Enter)">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <FontIcon Glyph="&#xE710;" FontSize="10" />
+                            <TextBlock Text="新增行" />
+                        </StackPanel>
+                    </Button>
+                    <DropDownButton x:Name="TemplateDropDownButton" Content="常用模板" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" MinHeight="24" Padding="9,2" CornerRadius="12" FontSize="11" Background="{ThemeResource OpSoftBrush}" BorderThickness="0" AutomationProperties.Name="常用目录模板">
+                        <DropDownButton.Flyout>
+                            <Flyout x:Name="TemplateFlyout" Placement="BottomEdgeAlignedLeft" Opening="TemplateFlyout_Opening" FlyoutPresenterStyle="{StaticResource SelectionDropDownPresenterStyle}">
+                                <StackPanel Width="284" Spacing="6" Padding="4,2">
+                                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel x:Name="TemplateListHost" Spacing="2" />
+                                    </ScrollViewer>
+                                    <Border Style="{StaticResource OpDividerStyle}" />
+                                    <StackPanel Spacing="5">
+                                        <Grid ColumnSpacing="5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox x:Name="NewTemplateNameBox" Style="{StaticResource OpSoftTextBoxStyle}" PlaceholderText="输入名称，将当前大纲存为模板…" KeyDown="NewTemplateNameBox_KeyDown" AutomationProperties.Name="新模板名称" />
+                                            <Button Grid.Column="1" Content="存为模板" Click="SaveTemplate_Click" Style="{StaticResource OpActionStyle}" MinHeight="32" Padding="10,4" />
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="TemplateFlyoutMessage" Visibility="Collapsed" FontSize="11" Foreground="{ThemeResource SystemFillColorCriticalBrush}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                                            <Button Grid.Column="1" Content="恢复默认" Click="ResetTemplates_Click" Background="Transparent" BorderThickness="0" Padding="4,2" FontSize="11" Foreground="{ThemeResource WorkspaceSecondaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Flyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                    <Button Click="ClearOutline_Click" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" Style="{StaticResource OpPillButtonStyle}" ToolTipService.ToolTip="清空当前目录的待创建草稿">
+                        <TextBlock Text="清空草稿" />
+                    </Button>
+                </StackPanel>
+
+                <Button Grid.Column="4" Command="{x:Bind ViewModel.ReloadCreationContentsCommand}" Style="{StaticResource WorkspaceIconButtonStyle}" VerticalAlignment="Center" AutomationProperties.Name="刷新当前目录内容" ToolTipService.ToolTip="刷新当前目录内容">
+                    <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                </Button>
+            </Grid>
+
+            <!-- Row 1: Loading / Notice Strip -->
+            <StackPanel Grid.Row="1">
+                <ProgressBar IsIndeterminate="True" Visibility="{x:Bind ViewModel.IsReadingCreationContents, Mode=OneWay}" AutomationProperties.Name="正在读取当前文件夹" />
+                <TextBlock Text="{x:Bind ViewModel.CreationContentsNotice, Mode=OneWay}" Visibility="{x:Bind ViewModel.HasCreationContentsNotice, Mode=OneWay}" Margin="16,6,16,2" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource WorkspaceSecondaryBrush}" AutomationProperties.LiveSetting="Polite" />
+                <TextBlock x:Name="OutlineErrorBanner" Visibility="Collapsed" Margin="16,6,16,2" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource SystemFillColorCriticalBrush}" AutomationProperties.LiveSetting="Polite" />
+            </StackPanel>
+
+            <!-- Row 2: Main Interactive Outline Canvas + Marquee Rubber-Band Overlay -->
+            <Grid x:Name="OutlineCanvasGrid" Grid.Row="2" Background="Transparent" PointerPressed="Canvas_PointerPressed" PointerMoved="Canvas_PointerMoved" PointerReleased="Canvas_PointerReleased" PointerCaptureLost="Canvas_PointerCaptureLost" KeyDown="Canvas_KeyDown">
+                <ScrollViewer x:Name="OutlineScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
+                    <StackPanel x:Name="ContentsSurface" Padding="14,10,14,20" Spacing="10" Background="Transparent" ContextRequested="Contents_ContextRequested">
+
+                        <!-- Collapsible Existing Items on Disk -->
+                        <Border Visibility="{x:Bind ViewModel.HasExistingCreationContents, Mode=OneWay}" CornerRadius="8" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" Padding="10,6">
+                            <StackPanel Spacing="6">
+                                <Button x:Name="ExistingToggleButton" Click="ToggleExisting_Click" Style="{StaticResource OpDisclosureStyle}" MinHeight="26" Padding="2,0">
+                                    <Grid ColumnSpacing="6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon x:Name="ExistingChevron" Glyph="&#xE76C;" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.ExistingCreationSummary, Mode=OneWay}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="点击展开查看 · 双击文件夹可进入" FontSize="11" Foreground="{ThemeResource WorkspaceSecondaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Button>
+                                <ListView x:Name="ExistingListView" Visibility="Collapsed" ItemsSource="{x:Bind ViewModel.ExistingCreationContents, Mode=OneWay}" SelectedItem="{x:Bind ViewModel.SelectedCreationContent, Mode=TwoWay}" SelectionMode="Single" MaxHeight="180" ItemContainerStyle="{StaticResource WorkspaceListItemStyle}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="local:CreationContentRow">
+                                            <Grid Padding="0,2" ColumnSpacing="10" DoubleTapped="Contents_DoubleTapped" Tag="{x:Bind}" Background="Transparent" ToolTipService.ToolTip="{x:Bind Details}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="22" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <FontIcon Glyph="{x:Bind Glyph}" FontSize="13" Foreground="{ThemeResource WorkspaceCategoryFolderBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{x:Bind Name}" FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                <Border Grid.Column="2" Background="{ThemeResource WorkspaceCardBrush}" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{x:Bind Status}" FontSize="11" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Direct Live Outline Editor Rows -->
+                        <StackPanel Spacing="4">
+                            <StackPanel x:Name="OutlineRowsHost" Spacing="3" />
+
+                            <TextBlock x:Name="OutlineOverflowHint" Visibility="Collapsed" FontSize="11.5" Margin="8,4,8,0" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+
+                            <Button x:Name="AppendLineGhostButton" Click="AddLine_Click" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" AllowDrop="True" DragOver="RootDropZone_DragOver" DragLeave="RootDropZone_DragLeave" Drop="RootDropZone_Drop" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Background="Transparent" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,4,0,0" Foreground="{ThemeResource WorkspaceSecondaryBrush}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE710;" FontSize="11" VerticalAlignment="Center" />
+                                    <TextBlock Text="点击新增一行，或直接 Ctrl+V 粘贴多行大纲 / 拖拽至此移出到顶层…" FontSize="12" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Translucent Rubber-Band Selection Overlay -->
+                <Canvas x:Name="MarqueeCanvas" IsHitTestVisible="False">
+                    <Border x:Name="MarqueeRect" Visibility="Collapsed" Background="{ThemeResource WorkspaceAccentSoftBrush}" BorderBrush="{ThemeResource WorkspaceAccentBrush}" BorderThickness="1" CornerRadius="4" />
+                </Canvas>
+            </Grid>
+
+            <!-- Row 3: Bottom Status Bar (aligned with FileInputView / 图六) -->
+            <Border Grid.Row="3" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,1,0,0" Padding="16,7">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <TextBlock x:Name="OutlineListSummary" Text="0 / 0 项" Typography.NumeralAlignment="Tabular" Style="{StaticResource WorkspaceCaptionStyle}" />
+                        <TextBlock Text="·" Style="{StaticResource WorkspaceCaptionStyle}" />
+                        <TextBlock x:Name="OutlineSelectionSummary" Text="未勾选 · 当前文件夹及子文件夹共 0 项" MaxWidth="520" TextTrimming="CharacterEllipsis" Style="{StaticResource WorkspaceCaptionStyle}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="PromoteSelectedOutlineButton" Content="移至顶层" FontSize="12" Padding="9,4" Visibility="Collapsed" Click="PromoteSelectedToRoot_Click" />
+                        <Button x:Name="RemoveSelectedOutlineButton" Content="移出列表" FontSize="12" Padding="10,4" IsEnabled="False" Click="DeleteSelectedRows_Click" ToolTipService.ToolTip="只移出待创建列表，不改动磁盘文件。" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

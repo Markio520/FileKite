@@ -1,0 +1,25 @@
+﻿<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
+  </PropertyGroup>
+  <!-- Packaging modes generate different resource indexes and must not share intermediates. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'FileAssistant.App'">
+    <BaseOutputPath>bin/shared-index/packaged/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/shared-index/packaged/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'FileAssistant.App' and '$(WindowsPackageType)' == 'None'">
+    <BaseOutputPath>bin/shared-index/unpackaged/</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/shared-index/unpackaged/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(SharedIndexTrial)' == 'true'">
+    <DefineConstants>$(DefineConstants);SHARED_INDEX_TRIAL</DefineConstants>
+    <TrialBuildSuffix Condition="'$(IndexTrialBuild)' != ''">$(IndexTrialBuild)/</TrialBuildSuffix>
+    <BaseOutputPath>bin/index-trial/$(TrialBuildSuffix)</BaseOutputPath>
+    <BaseIntermediateOutputPath>obj/index-trial/$(TrialBuildSuffix)</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

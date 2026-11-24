@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" /><PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" /><PackageReference Include="CommunityToolkit.Mvvm" />
+    <ProjectReference Include="../../src/FileAssistant.Core/FileAssistant.Core.csproj" />
+    <Using Include="Xunit" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.CreationFiles.cs" Link="Sources/NamingViewModel.CreationFiles.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.CreationActions.cs" Link="Sources/NamingViewModel.CreationActions.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.CreationTargets.cs" Link="Sources/NamingViewModel.CreationTargets.cs" />
+    <!-- ViewModels have no WinUI dependency; exercise their actual sources without a UI test host. -->
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchViewModel.Locations.cs" Link="Sources/SearchViewModel.Locations.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Cleanup/CleanupViewModel.cs" Link="Sources/CleanupViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/SpaceAnalysis/SpaceAnalysisViewModel.cs" Link="Sources/SpaceAnalysisViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchViewModel.cs" Link="Sources/SearchViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchViewModel.Filters.cs" Link="Sources/SearchViewModel.Filters.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchViewModel.Preferences.cs" Link="Sources/SearchViewModel.Preferences.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchPreferences.cs" Link="Sources/SearchPreferences.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/ThrottledSearchProgress.cs" Link="Sources/ThrottledSearchProgress.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchFilterOptions.cs" Link="Sources/SearchFilterOptions.cs" />
+    <Compile Include="../../src/FileAssistant.App/Controls/SelectionOption.cs" Link="Sources/SelectionOption.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/FileInput/FileTypeFilterOptions.cs" Link="Sources/FileTypeFilterOptions.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Workspace/WorkspaceSelectionOptions.cs" Link="Sources/WorkspaceSelectionOptions.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchResultItem.cs" Link="Sources/SearchResultItem.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Search/SearchColumnWidths.cs" Link="Sources/SearchColumnWidths.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Workspace/WorkspaceViewModel.cs" Link="Sources/WorkspaceViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Workspace/WorkspaceViewModel.Collections.cs" Link="Sources/WorkspaceViewModel.Collections.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Workspace/WorkspaceViewModel.Undo.cs" Link="Sources/WorkspaceViewModel.Undo.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/FileInput/CollectionSourceSelection.cs" Link="Sources/CollectionSourceSelection.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Workspace/WorkspaceInputPurpose.cs" Link="Sources/WorkspaceInputPurpose.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Workspace/WorkspaceFile.cs" Link="Sources/WorkspaceFile.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Workspace/WorkspaceSamples.cs" Link="Sources/WorkspaceSamples.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Convert/ConversionViewModel.cs" Link="Sources/ConversionViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Convert/ConversionViewModel.Options.cs" Link="Sources/ConversionViewModel.Options.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Convert/ConversionViewModel.Previews.cs" Link="Sources/ConversionViewModel.Previews.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Outputs/OutputsViewModel.cs" Link="Sources/OutputsViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Outputs/OutputEntry.cs" Link="Sources/OutputEntry.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Settings/EnginesViewModel.cs" Link="Sources/EnginesViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Settings/EngineSettingItem.cs" Link="Sources/EngineSettingItem.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Settings/AppearanceViewModel.cs" Link="Sources/AppearanceViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Settings/PaneWidthPreferences.cs" Link="Sources/PaneWidthPreferences.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Tasks/ProcessingJob.cs" Link="Sources/ProcessingJob.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Organize/CopyViewModel.cs" Link="Sources/CopyViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Organize/CopyViewModel.Previews.cs" Link="Sources/CopyViewModel.Previews.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.cs" Link="Sources/NamingViewModel.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.Simple.cs" Link="Sources/NamingViewModel.Simple.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.Custom.cs" Link="Sources/NamingViewModel.Custom.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.Interaction.cs" Link="Sources/NamingViewModel.Interaction.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.BulkCreation.cs" Link="Sources/NamingViewModel.BulkCreation.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.Contents.cs" Link="Sources/NamingViewModel.Contents.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.RenameTabs.cs" Link="Sources/NamingViewModel.RenameTabs.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/NamingViewModel.Outline.cs" Link="Sources/NamingViewModel.Outline.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/OutlineTemplateStore.cs" Link="Sources/OutlineTemplateStore.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/CreateOrRename/DirectoryDraft.cs" Link="Sources/DirectoryDraft.cs" />
+    <Compile Include="../../src/FileAssistant.App/Features/Tasks/ProcessingJobsViewModel.cs" Link="Sources/ProcessingJobsViewModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../src/FileAssistant.App/App.xaml;../../src/FileAssistant.App/Features/Workspace/WorkspacePage.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingOptionsView.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingCreationPreviewView.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingDirectoryTreeView.xaml;../../src/FileAssistant.App/Features/Convert/ConversionOptionsView.xaml;../../src/FileAssistant.App/Features/FileInput/FileInputView.xaml"
+          Link="StartupXaml/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../src/FileAssistant.App/Resources/*.xaml"
+          Link="StartupXaml/Resources/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,10 @@
+纸鸢 · FileKite
+Copyright 2026 Markio520
+
+This product includes software developed by Markio520 (https://github.com/Markio520/FileKite),
+licensed under the Apache License, Version 2.0.
+
+This product adapts core uninstallation and residue-scanning components from
+Bulk Crap Uninstaller (BCUninstaller 6.3, Apache License 2.0, Copyright Marcin Szeniak)
+and includes third-party open-source libraries whose respective licenses and notices
+are preserved in the `third-party/` directory (and copied to `Licenses/` in build outputs).

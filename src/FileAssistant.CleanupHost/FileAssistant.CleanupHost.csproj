@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <SelfContained Condition="'$(SelfContained)' == ''">true</SelfContained>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x86'">win-x86</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+    <ApplicationManifest>../FileAssistant.App/app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../FileAssistant.Core/FileAssistant.Core.csproj" />
+    <ProjectReference Include="../FileAssistant.BcuCore/FileAssistant.BcuCore.csproj" />
+    <Using Include="System" /><Using Include="System.IO" /><Using Include="System.Linq" />
+    <Using Include="System.Collections.Generic" /><Using Include="System.Threading" /><Using Include="System.Threading.Tasks" />
+    <Compile Include="../FileAssistant.Infrastructure/Cleanup/CleanupWire.cs" Link="CleanupWire.cs" />
+    <Compile Include="../FileAssistant.Infrastructure/Cleanup/CleanupPathPolicy.cs" Link="CleanupPathPolicy.cs" />
+    <Compile Include="../FileAssistant.Infrastructure/Cleanup/FileCleanupEngine.cs" Link="FileCleanupEngine.cs" />
+    <Compile Include="../FileAssistant.Infrastructure/Cleanup/WindowsFileLocks.cs" Link="WindowsFileLocks.cs" />
+    <Compile Include="../FileAssistant.Infrastructure/Cleanup/RegistryCleanup.cs" Link="RegistryCleanup.cs" />
+    <Compile Include="../FileAssistant.Infrastructure/FileSystem/SpaceFileMetadata.cs" Link="SpaceFileMetadata.cs" />
+    <Compile Include="../FileAssistant.Infrastructure/Windows/ShellRecycleOperation.cs" Link="ShellRecycleOperation.cs" />
+  </ItemGroup>
+</Project>

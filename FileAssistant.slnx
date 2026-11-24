@@ -1,0 +1,37 @@
+﻿<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+    <Platform Name="ARM64" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/FileAssistant.BcuCore/FileAssistant.BcuCore.csproj"><Platform Project="Any CPU" /></Project>
+    <Project Path="src/FileAssistant.CleanupHost/FileAssistant.CleanupHost.csproj">
+      <Platform Solution="*|x64" Project="x64" /><Platform Solution="*|x86" Project="x86" /><Platform Solution="*|ARM64" Project="ARM64" />
+    </Project>
+    <Project Path="src/FileAssistant.App/FileAssistant.App.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+      <Platform Solution="*|ARM64" Project="ARM64" />
+    </Project>
+    <Project Path="src/FileAssistant.Core/FileAssistant.Core.csproj">
+      <Platform Project="Any CPU" />
+    </Project>
+    <Project Path="src/FileAssistant.Infrastructure/FileAssistant.Infrastructure.csproj">
+      <Platform Project="Any CPU" />
+    </Project>
+    <Project Path="src/FileAssistant.Indexing.Windows/FileAssistant.Indexing.Windows.csproj"><Platform Project="Any CPU" /></Project>
+    <Project Path="src/FileAssistant.Indexing/FileAssistant.Indexing.csproj"><Platform Project="Any CPU" /></Project>
+    <Project Path="src/FileAssistant.SpaceScan/FileAssistant.SpaceScan.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="*|x86" Project="x86" />
+      <Platform Solution="*|ARM64" Project="ARM64" />
+    </Project>
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FileAssistant.Core.Tests/FileAssistant.Core.Tests.csproj"><Platform Project="Any CPU" /></Project>
+    <Project Path="tests/FileAssistant.Infrastructure.Tests/FileAssistant.Infrastructure.Tests.csproj"><Platform Project="Any CPU" /></Project>
+    <Project Path="tests/FileAssistant.Indexing.Tests/FileAssistant.Indexing.Tests.csproj"><Platform Project="Any CPU" /></Project>
+    <Project Path="tests/FileAssistant.App.Tests/FileAssistant.App.Tests.csproj"><Platform Project="Any CPU" /></Project>
+  </Folder>
+</Solution>

@@ -1,0 +1,708 @@
+﻿<UserControl
+    x:Class="FileAssistant.App.Features.Convert.ConversionOptionsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FileAssistant.App.Controls"
+    xmlns:preview="using:FileAssistant.App.Features.Preview">
+    <UserControl.Resources>
+        <DataTemplate x:Key="PreviewDetail" x:DataType="x:String">
+            <TextBlock Text="{x:Bind}" TextWrapping="Wrap" FontSize="12" Margin="0,5" IsTextSelectionEnabled="True" />
+        </DataTemplate>
+    </UserControl.Resources>
+    <controls:OperationPanel x:Name="Panel" IsCompact="True">
+        <controls:OperationPanel.Body>
+            <Grid>
+                <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.ShowSettings, Mode=OneWay}">
+                    <Border Style="{StaticResource OpPrimaryCardStyle}" Padding="12,8">
+                        <StackPanel Spacing="6">
+                            <Grid MinHeight="34" ColumnSpacing="8" Visibility="{x:Bind ViewModel.HasScenarioPresets, Mode=OneWay}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Text="常用预设"
+                                    Style="{StaticResource OpLabelStyle}"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis" />
+                                <ScrollViewer
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    HorizontalScrollMode="Enabled"
+                                    HorizontalScrollBarVisibility="Auto"
+                                    VerticalScrollMode="Disabled"
+                                    VerticalScrollBarVisibility="Disabled">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                                        <ToggleButton
+                                            Tag="webp"
+                                            Content="WebP"
+                                            MinHeight="26"
+                                            Padding="10,3"
+                                            Style="{StaticResource OpPillToggleStyle}"
+                                            IsEnabled="{x:Bind ViewModel.CanSelectFormat, Mode=OneWay}"
+                                            IsChecked="{x:Bind ViewModel.IsWebPPreset, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanPresetWebP, Mode=OneWay}"
+                                            Click="ScenarioPreset_Click"
+                                            AutomationProperties.Name="网页轻量 WebP · 82%"
+                                            ToolTipService.ToolTip="网页轻量 WebP · 82%" />
+                                        <ToggleButton
+                                            Tag="png"
+                                            Content="PNG"
+                                            MinHeight="26"
+                                            Padding="10,3"
+                                            Style="{StaticResource OpPillToggleStyle}"
+                                            IsEnabled="{x:Bind ViewModel.CanSelectFormat, Mode=OneWay}"
+                                            IsChecked="{x:Bind ViewModel.IsPngPreset, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanPresetPng, Mode=OneWay}"
+                                            Click="ScenarioPreset_Click"
+                                            AutomationProperties.Name="无损透明 PNG"
+                                            ToolTipService.ToolTip="无损透明 PNG" />
+                                        <ToggleButton
+                                            Tag="jpg"
+                                            Content="JPG"
+                                            MinHeight="26"
+                                            Padding="10,3"
+                                            Style="{StaticResource OpPillToggleStyle}"
+                                            IsEnabled="{x:Bind ViewModel.CanSelectFormat, Mode=OneWay}"
+                                            IsChecked="{x:Bind ViewModel.IsJpgPreset, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanPresetJpg, Mode=OneWay}"
+                                            Click="ScenarioPreset_Click"
+                                            AutomationProperties.Name="高兼容 JPG · 90%"
+                                            ToolTipService.ToolTip="高兼容 JPG · 90%" />
+                                        <ToggleButton
+                                            Tag="pdf"
+                                            Content="PDF"
+                                            MinHeight="26"
+                                            Padding="10,3"
+                                            Style="{StaticResource OpPillToggleStyle}"
+                                            IsEnabled="{x:Bind ViewModel.CanSelectFormat, Mode=OneWay}"
+                                            IsChecked="{x:Bind ViewModel.IsPdfPreset, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanPresetPdf, Mode=OneWay}"
+                                            Click="ScenarioPreset_Click"
+                                            AutomationProperties.Name="归档或图集 PDF"
+                                            ToolTipService.ToolTip="归档或图集 PDF" />
+                                        <ToggleButton
+                                            Tag="mp3"
+                                            Content="MP3"
+                                            MinHeight="26"
+                                            Padding="10,3"
+                                            Style="{StaticResource OpPillToggleStyle}"
+                                            IsEnabled="{x:Bind ViewModel.CanSelectFormat, Mode=OneWay}"
+                                            IsChecked="{x:Bind ViewModel.IsMp3Preset, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanPresetMp3, Mode=OneWay}"
+                                            Click="ScenarioPreset_Click"
+                                            AutomationProperties.Name="音频 MP3 · 192 kbps"
+                                            ToolTipService.ToolTip="音频 MP3 · 192 kbps" />
+                                        <ToggleButton
+                                            Tag="mp4"
+                                            Content="MP4"
+                                            MinHeight="26"
+                                            Padding="10,3"
+                                            Style="{StaticResource OpPillToggleStyle}"
+                                            IsEnabled="{x:Bind ViewModel.CanSelectFormat, Mode=OneWay}"
+                                            IsChecked="{x:Bind ViewModel.IsMp4Preset, Mode=OneWay}"
+                                            Visibility="{x:Bind ViewModel.CanPresetMp4, Mode=OneWay}"
+                                            Click="ScenarioPreset_Click"
+                                            AutomationProperties.Name="兼容 MP4 视频"
+                                            ToolTipService.ToolTip="兼容 MP4 视频" />
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Grid>
+                            <Border Style="{StaticResource OpDividerStyle}" Visibility="{x:Bind ViewModel.HasScenarioPresets, Mode=OneWay}" />
+                            <Grid Style="{StaticResource OpPropertyRowStyle}" MinHeight="34">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="3*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Text="输出格式"
+                                    Style="{StaticResource OpLabelStyle}"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis" />
+                                <controls:SelectionDropDown
+                                    Grid.Column="1"
+                                    Style="{StaticResource OpPlainDropDownStyle}"
+                                    ItemsSource="{x:Bind ViewModel.Formats, Mode=OneWay}"
+                                    SelectedValue="{x:Bind ViewModel.TargetFormatValue, Mode=TwoWay}"
+                                    ButtonContent="{x:Bind ViewModel.FormatButtonContent, Mode=OneWay}"
+                                    IsEnabled="{x:Bind ViewModel.CanSelectFormat, Mode=OneWay}"
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="转换输出格式" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <InfoBar
+                        IsOpen="{x:Bind ViewModel.HasFormatError, Mode=OneWay}"
+                        IsClosable="False"
+                        Severity="Warning"
+                        Message="{x:Bind ViewModel.FormatFeedback, Mode=OneWay}" />
+                    <Button
+                        Content="前往引擎管理"
+                        Command="{x:Bind ViewModel.OpenEngineManagementCommand}"
+                        Visibility="{x:Bind ViewModel.HasMissingEngine, Mode=OneWay}"
+                        HorizontalAlignment="Left" />
+
+                    <!-- Directly Exposed Processing Mode & Context-Matched Format Parameters -->
+                    <Grid Style="{StaticResource OpPropertyRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="处理模式" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <controls:SelectionDropDown
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftDropDownStyle}"
+                            ItemsSource="{x:Bind ViewModel.Modes}"
+                            SelectedValue="{x:Bind ViewModel.ModeValue, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="转换处理模式" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowProcessing, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="压缩预设" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <controls:SelectionDropDown
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftDropDownStyle}"
+                            ItemsSource="{x:Bind ViewModel.Presets}"
+                            SelectedValue="{x:Bind ViewModel.PresetValue, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="压缩预设" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowQuality, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="图片质量" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <Grid Grid.Column="1" Background="{ThemeResource OpSoftBrush}" BorderBrush="{ThemeResource OpFieldEdgeBrush}" BorderThickness="1" CornerRadius="6" ColumnSpacing="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="44" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <NumberBox
+                                Style="{StaticResource OpSoftNumberBoxStyle}"
+                                BorderThickness="0"
+                                Minimum="1"
+                                Maximum="100"
+                                SmallChange="1"
+                                SpinButtonPlacementMode="Hidden"
+                                Value="{x:Bind ViewModel.Quality, Mode=TwoWay}"
+                                AutomationProperties.Name="图片质量百分比"
+                                IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" />
+                            <TextBlock Text="%" Grid.Column="1" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" />
+                            <Slider
+                                Grid.Column="2"
+                                MinWidth="0"
+                                Margin="3,0,6,0"
+                                VerticalAlignment="Center"
+                                Minimum="1"
+                                Maximum="100"
+                                StepFrequency="1"
+                                Value="{x:Bind ViewModel.Quality, Mode=TwoWay}"
+                                IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                                AutomationProperties.Name="图片质量" />
+                        </Grid>
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowSize, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="最长边 (px)" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <NumberBox
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftNumberBoxStyle}"
+                            Value="{x:Bind ViewModel.MaximumEdge, Mode=TwoWay}"
+                            Minimum="0"
+                            Maximum="16384"
+                            SpinButtonPlacementMode="Hidden"
+                            AutomationProperties.Name="最长边（px，0 为原尺寸）"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            ToolTipService.ToolTip="0 表示保持原尺寸" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowPdfDpi, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="PDF 分辨率" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <NumberBox
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftNumberBoxStyle}"
+                            Value="{x:Bind ViewModel.PdfDpi, Mode=TwoWay}"
+                            Minimum="72"
+                            Maximum="600"
+                            SpinButtonPlacementMode="Hidden"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="PDF 导出分辨率（DPI）" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowVideo, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="视频码率" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <NumberBox
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftNumberBoxStyle}"
+                            Value="{x:Bind ViewModel.VideoBitrate, Mode=TwoWay}"
+                            Minimum="100"
+                            Maximum="100000"
+                            SpinButtonPlacementMode="Hidden"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="视频码率（kbps）" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowAudioBitrate, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="音频码率" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <NumberBox
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftNumberBoxStyle}"
+                            Value="{x:Bind ViewModel.AudioBitrate, Mode=TwoWay}"
+                            Minimum="1"
+                            SpinButtonPlacementMode="Hidden"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="音频码率（kbps）" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowSampleRate, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="采样率" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <controls:SelectionDropDown
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftDropDownStyle}"
+                            ItemsSource="{x:Bind ViewModel.SampleRates}"
+                            SelectedValue="{x:Bind ViewModel.SampleRate, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="音频采样率" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowDelimited, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="文本编码" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <controls:SelectionDropDown
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftDropDownStyle}"
+                            ItemsSource="{x:Bind ViewModel.Encodings}"
+                            SelectedValue="{x:Bind ViewModel.EncodingValue, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="表格文本编码" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowSeparator, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="CSV 分隔符" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <controls:SelectionDropDown
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftDropDownStyle}"
+                            ItemsSource="{x:Bind ViewModel.Separators}"
+                            SelectedValue="{x:Bind ViewModel.SeparatorValue, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="CSV 分隔符" />
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowSheet, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="导出工作表" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <NumberBox
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftNumberBoxStyle}"
+                            Value="{x:Bind ViewModel.Sheet, Mode=TwoWay}"
+                            Minimum="0"
+                            SpinButtonPlacementMode="Hidden"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                            AutomationProperties.Name="导出工作表（0 表示全部）"
+                            ToolTipService.ToolTip="0 表示全部工作表" />
+                    </Grid>
+
+                    <Border Style="{StaticResource OpDividerStyle}" />
+                    <Grid Style="{StaticResource OpPropertyRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="保存位置" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <Grid Grid.Column="1" CornerRadius="6" Background="{ThemeResource OpSoftBrush}" BorderBrush="{ThemeResource OpFieldEdgeBrush}" BorderThickness="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="30" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox
+                                Style="{StaticResource OpSoftTextBoxStyle}"
+                                BorderThickness="0"
+                                Text="{x:Bind ViewModel.OutputDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                PlaceholderText="{x:Bind ViewModel.OutputPlaceholder, Mode=OneWay}"
+                                IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.OutputDirectory, Mode=OneWay}"
+                                AutomationProperties.Name="转换输出文件夹" />
+                            <Button
+                                Grid.Column="1"
+                                Style="{StaticResource WorkspaceIconButtonStyle}"
+                                MinWidth="0"
+                                MinHeight="0"
+                                Width="30"
+                                Height="30"
+                                Padding="0"
+                                Click="PickOutput_Click"
+                                IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}"
+                                ToolTipService.ToolTip="选择输出文件夹"
+                                AutomationProperties.Name="选择输出文件夹">
+                                <FontIcon Glyph="&#xE838;" FontSize="15" Foreground="{ThemeResource WorkspaceCategoryFolderBrush}" />
+                            </Button>
+                        </Grid>
+                    </Grid>
+                    <Grid Style="{StaticResource OpPropertyRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="3*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="同名策略" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <controls:SelectionDropDown
+                            Grid.Column="1"
+                            Style="{StaticResource OpSoftDropDownStyle}"
+                            ItemsSource="{x:Bind ViewModel.ConflictPolicies}"
+                            SelectedValue="{x:Bind ViewModel.ConflictPolicyValue, Mode=TwoWay}"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.Name="转换同名策略"
+                            IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" />
+                    </Grid>
+                    <Border Style="{StaticResource OpPreviewStyle}" Visibility="{x:Bind ViewModel.HasFormats, Mode=OneWay}">
+                        <Grid ColumnSpacing="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="产物" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.ProductName, Mode=OneWay}"
+                                Grid.Column="1"
+                                FontSize="12"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                TextTrimming="CharacterEllipsis"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.ProductName, Mode=OneWay}" />
+                            <Border Grid.Column="2" Style="{StaticResource OpPreviewChipStyle}">
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.ProductExtension, Mode=OneWay}"
+                                    FontFamily="Consolas"
+                                    FontSize="12"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource WorkspaceDiffAddedTextBrush}" />
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <Border Style="{StaticResource OpDividerStyle}" />
+                    <Grid ColumnSpacing="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Button
+                            Style="{StaticResource OpDisclosureStyle}"
+                            IsEnabled="{x:Bind ViewModel.HasPreviewDetails, Mode=OneWay}"
+                            ToolTipService.ToolTip="{x:Bind ViewModel.PlanSummary, Mode=OneWay}"
+                            AutomationProperties.Name="查看计划明细">
+                            <Button.Flyout>
+                                <Flyout Placement="Left">
+                                    <ListView
+                                        ItemsSource="{x:Bind ViewModel.PreviewDetails, Mode=OneWay}"
+                                        ItemTemplate="{StaticResource PreviewDetail}"
+                                        SelectionMode="None"
+                                        MaxHeight="360"
+                                        Width="340"
+                                        Padding="0"
+                                        AutomationProperties.Name="转换计划明细" />
+                                </Flyout>
+                            </Button.Flyout>
+                            <Grid ColumnSpacing="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Text="转换计划明细"
+                                    Style="{StaticResource OpLabelStyle}"
+                                    VerticalAlignment="Center"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Text="{x:Bind ViewModel.PlanCount, Mode=OneWay}"
+                                    Grid.Column="1"
+                                    Style="{StaticResource OpLabelStyle}"
+                                    VerticalAlignment="Center" />
+                                <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="10" />
+                            </Grid>
+                        </Button>
+                        <Button
+                            Grid.Column="1"
+                            Command="{x:Bind ViewModel.BuildPlanCommand}"
+                            Style="{StaticResource WorkspaceIconButtonStyle}"
+                            AutomationProperties.Name="刷新转换计划"
+                            ToolTipService.ToolTip="重新检查文件和输出路径">
+                            <FontIcon Glyph="&#xE72C;" FontSize="13" />
+                        </Button>
+                    </Grid>
+                    <TextBlock
+                        Text="{x:Bind ViewModel.Feedback, Mode=OneWay}"
+                        Style="{StaticResource WorkspaceCaptionStyle}"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind ViewModel.HasStatusMessage, Mode=OneWay}"
+                        AutomationProperties.LiveSetting="Polite" />
+                    <Button Content="预览所选文件" FontSize="12" Padding="9,4" Visibility="{x:Bind ViewModel.Input.HasSelection, Mode=OneWay}">
+                        <Button.Flyout>
+                            <Flyout Placement="Left">
+                                <StackPanel Width="310" Spacing="6">
+                                    <preview:FilePreviewView
+                                        PreviewHeight="160"
+                                        File="{x:Bind ViewModel.Input.PreviewFile, Mode=OneWay}"
+                                        Glyph="{x:Bind ViewModel.Input.PreviewGlyph, Mode=OneWay}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.Input.PreviewName, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis"
+                                        ToolTipService.ToolTip="{x:Bind ViewModel.Input.PreviewPath, Mode=OneWay}" />
+                                    <TextBlock
+                                        Text="{x:Bind ViewModel.Input.PreviewStatus, Mode=OneWay}"
+                                        TextWrapping="Wrap"
+                                        Style="{StaticResource WorkspaceCaptionStyle}" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <!-- In-Place Collapsible Advanced & Format Notes Drawer (Zero Subpage Jump) -->
+                    <Border Style="{StaticResource OpDividerStyle}" />
+                    <Button x:Name="AdvancedToggle" Style="{StaticResource OpDisclosureStyle}" Click="ToggleAdvanced_Click" AutomationProperties.Name="高级选项与格式说明">
+                        <Grid ColumnSpacing="5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon x:Name="AdvancedChevron" Glyph="&#xE76C;" FontSize="10" VerticalAlignment="Center" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                            <TextBlock Grid.Column="1" Text="高级选项与格式说明" VerticalAlignment="Center" FontSize="12" Style="{StaticResource OpLabelStyle}" />
+                        </Grid>
+                    </Button>
+                    <ContentControl x:Name="AdvancedBody" Visibility="Collapsed" IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" HorizontalContentAlignment="Stretch">
+                        <StackPanel Spacing="5">
+                            <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowMedia, Mode=OneWay}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="3*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="音轨序号" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <NumberBox
+                                    Grid.Column="1"
+                                    Style="{StaticResource OpSoftNumberBoxStyle}"
+                                    Value="{x:Bind ViewModel.AudioTrack, Mode=TwoWay}"
+                                    Minimum="1"
+                                    SpinButtonPlacementMode="Hidden"
+                                    AutomationProperties.Name="音轨序号（从 1 开始）" />
+                            </Grid>
+                            <CheckBox
+                                Content="TIFF 处理全部页面"
+                                FontSize="12"
+                                MinHeight="28"
+                                IsChecked="{x:Bind ViewModel.AllTiffPages, Mode=TwoWay}"
+                                Visibility="{x:Bind ViewModel.ShowTiffPages, Mode=OneWay}" />
+                            <Grid Style="{StaticResource OpPropertyRowStyle}" Visibility="{x:Bind ViewModel.ShowFrame, Mode=OneWay}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="3*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="静态帧 / 页" Style="{StaticResource OpLabelStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <NumberBox
+                                    Grid.Column="1"
+                                    Style="{StaticResource OpSoftNumberBoxStyle}"
+                                    Value="{x:Bind ViewModel.Frame, Mode=TwoWay}"
+                                    Minimum="1"
+                                    SpinButtonPlacementMode="Hidden"
+                                    AutomationProperties.Name="静态图帧 / 页（从 1 开始）" />
+                            </Grid>
+                            <CheckBox
+                                Content="导入时将等号开头内容作为公式"
+                                FontSize="12"
+                                MinHeight="28"
+                                IsChecked="{x:Bind ViewModel.ImportFormulas, Mode=TwoWay}"
+                                Visibility="{x:Bind ViewModel.ShowImportFormulas, Mode=OneWay}" />
+                            <CheckBox
+                                Content="导出公式（不选则导出计算结果）"
+                                FontSize="12"
+                                MinHeight="28"
+                                IsChecked="{x:Bind ViewModel.ExportFormulas, Mode=TwoWay}"
+                                Visibility="{x:Bind ViewModel.ShowSheet, Mode=OneWay}" />
+                            <TextBlock
+                                Text="{x:Bind ViewModel.ConversionNote, Mode=OneWay}"
+                                TextWrapping="Wrap"
+                                Style="{StaticResource WorkspaceCaptionStyle}" />
+                        </StackPanel>
+                    </ContentControl>
+                </StackPanel>
+                <Border Visibility="{x:Bind ViewModel.IsExecuting, Mode=OneWay}">
+                    <StackPanel Spacing="10">
+                        <ProgressBar
+                            Value="{x:Bind ViewModel.ActiveJob.Progress, Mode=OneWay}"
+                            Maximum="100"
+                            Foreground="{ThemeResource WorkspaceAccentBrush}"
+                            AutomationProperties.Name="转换进度" />
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ActiveJob.Status, Mode=OneWay}"
+                            TextWrapping="Wrap"
+                            Style="{StaticResource WorkspaceCaptionStyle}" />
+                    </StackPanel>
+                </Border>
+                <Border Visibility="{x:Bind ViewModel.ShowResultPanel, Mode=OneWay}">
+                    <StackPanel Spacing="10">
+                        <TextBlock
+                            Text="{x:Bind ViewModel.ResultSummary, Mode=OneWay}"
+                            TextWrapping="Wrap"
+                            Style="{StaticResource WorkspaceSectionLabelStyle}" />
+                        <Button Content="查看结果明细" HorizontalAlignment="Left" Visibility="{x:Bind ViewModel.HasPreviewDetails, Mode=OneWay}">
+                            <Button.Flyout>
+                                <Flyout Placement="Left">
+                                    <ListView
+                                        ItemsSource="{x:Bind ViewModel.PreviewDetails, Mode=OneWay}"
+                                        ItemTemplate="{StaticResource PreviewDetail}"
+                                        SelectionMode="None"
+                                        MaxHeight="360"
+                                        Width="340"
+                                        Padding="0"
+                                        AutomationProperties.Name="转换结果明细" />
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <Border
+                            Style="{StaticResource WorkspaceSubtleCardStyle}"
+                            Padding="10"
+                            Visibility="{x:Bind ViewModel.HasOutputs, Mode=OneWay}">
+                            <StackPanel Spacing="8">
+                                <TextBlock
+                                    Text="继续处理本次产物"
+                                    Style="{StaticResource WorkspaceCaptionStyle}"
+                                    FontWeight="SemiBold" />
+                                <Grid ColumnSpacing="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button
+                                        Content="用新文件去改名"
+                                        Click="HandoffToNaming_Click"
+                                        FontSize="12"
+                                        Padding="8,5"
+                                        HorizontalAlignment="Stretch"
+                                        ToolTipService.ToolTip="将本次转换生成的新文件送入批量改名" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Content="用新文件去整理"
+                                        Click="HandoffToCopy_Click"
+                                        FontSize="12"
+                                        Padding="8,5"
+                                        HorizontalAlignment="Stretch"
+                                        ToolTipService.ToolTip="将本次转换生成的新文件送入文件整理" />
+                                </Grid>
+                                <Button
+                                    Content="新文件加入暂存区"
+                                    Click="HandoffToStaging_Click"
+                                    FontSize="12"
+                                    Padding="10,5"
+                                    HorizontalAlignment="Stretch"
+                                    ToolTipService.ToolTip="将本次生成的新文件加入暂存区，方便后续跨模块复用" />
+                                <Button
+                                    Content="查看本次输出"
+                                    Command="{x:Bind ViewModel.ShowOutputsCommand}"
+                                    FontSize="12"
+                                    Padding="10,5"
+                                    HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </controls:OperationPanel.Body>
+        <controls:OperationPanel.Footer>
+            <Border Style="{StaticResource OpFooterStyle}">
+                <StackPanel Spacing="4">
+                    <Grid ColumnSpacing="5" Visibility="{x:Bind ViewModel.IsChecking, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ProgressBar IsIndeterminate="True" VerticalAlignment="Center" AutomationProperties.Name="正在检查转换计划" />
+                        <Button Content="取消检查" Command="{x:Bind ViewModel.CancelCommand}" Grid.Column="1" />
+                    </Grid>
+                    <Grid>
+                        <Grid ColumnSpacing="6" Visibility="{x:Bind ViewModel.ShowSettings, Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.FooterScope, Mode=OneWay}"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource OpLabelStyle}"
+                                TextTrimming="CharacterEllipsis"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.ExecutionScope, Mode=OneWay}"
+                                AutomationProperties.LiveSetting="Polite" />
+                            <Button Content="开始转换" Command="{x:Bind ViewModel.RunCommand}" Grid.Column="1" Style="{StaticResource OpActionStyle}" />
+                        </Grid>
+                        <Grid ColumnSpacing="6" Visibility="{x:Bind ViewModel.IsExecuting, Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.FooterScope, Mode=OneWay}"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource OpLabelStyle}"
+                                TextTrimming="CharacterEllipsis"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.ExecutionScope, Mode=OneWay}"
+                                AutomationProperties.LiveSetting="Polite" />
+                            <Button
+                                Content="取消转换"
+                                Command="{x:Bind ViewModel.CancelCommand}"
+                                Grid.Column="1"
+                                Style="{StaticResource OpActionStyle}" />
+                        </Grid>
+                        <Grid ColumnSpacing="6" Visibility="{x:Bind ViewModel.ShowResultPanel, Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Text="{x:Bind ViewModel.ResultSummary, Mode=OneWay}"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource OpLabelStyle}"
+                                TextTrimming="CharacterEllipsis"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.ResultSummary, Mode=OneWay}"
+                                AutomationProperties.LiveSetting="Polite" />
+                            <Button
+                                Content="继续设置"
+                                Command="{x:Bind ViewModel.ContinueEditingCommand}"
+                                Grid.Column="1"
+                                Style="{StaticResource OpActionStyle}" />
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </controls:OperationPanel.Footer>
+    </controls:OperationPanel>
+</UserControl>

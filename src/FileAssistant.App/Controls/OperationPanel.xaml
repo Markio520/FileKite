@@ -1,0 +1,11 @@
+﻿<UserControl x:Class="FileAssistant.App.Controls.OperationPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <ScrollViewer x:Name="BodyScroll" Padding="16,18,16,20" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ContentControl x:Name="BodySurface" Content="{x:Bind Body, Mode=OneWay}" IsTabStop="False" HorizontalContentAlignment="Stretch" />
+        </ScrollViewer>
+        <ContentPresenter Grid.Row="1" Content="{x:Bind Footer, Mode=OneWay}" HorizontalContentAlignment="Stretch" />
+    </Grid>
+</UserControl>

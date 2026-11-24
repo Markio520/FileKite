@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="FileAssistant.App.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:resources="using:FileAssistant.App.Resources"
+    xmlns:local="using:FileAssistant.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="Resources/ThemePalette.xaml" />
+                <ResourceDictionary Source="Resources/WorkspaceTheme.xaml" />
+                <ResourceDictionary Source="Resources/WorkspaceMaterials.xaml" />
+                <ResourceDictionary Source="Resources/WorkspaceControls.xaml" />
+                <ResourceDictionary Source="Resources/ResizeControls.xaml" />
+                <resources:SelectionControls />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,190 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileAssistant.App.Resources">
+    <!-- Defaults: Light = approved concept 15; Dark = approved concept 14.
+         Single color source. Keep Light/Dark/HighContrast keys paired; pages use semantic brushes. -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <Color x:Key="OpFieldColor">#E6E5DD</Color>
+            <Color x:Key="OpFieldHoverColor">#ECEBE4</Color>
+            <Color x:Key="OpFieldEdgeColor">#00000000</Color>
+            <Color x:Key="OpDividerColor">#DADAD1</Color>
+            <Color x:Key="SystemAccentColor">#292E25</Color>
+            <Color x:Key="SystemAccentColorLight1">#707A64</Color>
+            <Color x:Key="SystemAccentColorLight2">#DADCD1</Color>
+            <Color x:Key="SystemAccentColorLight3">#E8EADF</Color>
+            <Color x:Key="SystemAccentColorDark1">#23281F</Color>
+            <Color x:Key="SystemAccentColorDark2">#1D221A</Color>
+            <Color x:Key="SystemAccentColorDark3">#151A12</Color>
+            <Color x:Key="AppBackgroundColor">#EEEEE8</Color>
+            <Color x:Key="AppSurfaceColor">#FDFDF9</Color>
+            <Color x:Key="AppSubtleColor">#F3F3EE</Color>
+            <Color x:Key="AppBorderColor">#DEDFD5</Color>
+            <Color x:Key="AppTextColor">#252620</Color>
+            <Color x:Key="AppSecondaryTextColor">#62655C</Color>
+            <Color x:Key="AppAccentColor">#292E25</Color>
+            <Color x:Key="AppAccentSecondaryColor">#3B4235</Color>
+            <Color x:Key="AppAccentTertiaryColor">#1D221A</Color>
+            <Color x:Key="AppAccentSubtleColor">#E1E3D8</Color>
+            <Color x:Key="AppSelectionHoverColor">#DADCD1</Color>
+            <Color x:Key="AppOnAccentColor">#FDFDF9</Color>
+            <Color x:Key="AppWindowOverlayColor">#EAF2F1EC</Color>
+            <Color x:Key="AppSpecularRimColor">#E0FFFFFF</Color>
+            <Color x:Key="AppNavigationColor">#E1E3D8</Color>
+            <Color x:Key="AppGlassContentColor">#F5FCFBF7</Color>
+            <Color x:Key="AppGlassPaneColor">#DCF2F1EA</Color>
+            <Color x:Key="AppSplitterRestColor">#00000000</Color>
+            <Color x:Key="AppGlassChromeColor">#70FAFAF6</Color>
+            <Color x:Key="AppGlassInsetColor">#60EAE8E2</Color>
+            <Color x:Key="AppGlassCardColor">#D8FFFFFF</Color>
+            <Color x:Key="AppGlassControlColor">#C8FFFFFF</Color>
+            <Color x:Key="AppGlassFieldColor">#FFFAFAF6</Color>
+            <Color x:Key="AppGlassBorderColor">#2E888C82</Color>
+            <Color x:Key="AppGlassPopupColor">#F3F3EE</Color>
+            <Color x:Key="AppPopupFallbackColor">#F5F5F0</Color>
+            <Color x:Key="AppAccentTextColor">#292E25</Color>
+            <Color x:Key="AppAccentSoftColor">#1A292E25</Color>
+            <Color x:Key="AppSuccessColor">#287046</Color>
+            <Color x:Key="AppDiffAddedBackgroundColor">#22287046</Color>
+            <Color x:Key="AppDiffAddedTextColor">#1F6E41</Color>
+            <Color x:Key="AppDiffRemovedTextColor">#888D81</Color>
+            <Color x:Key="AppIslandBackgroundColor">#F2252A21</Color>
+            <Color x:Key="AppIslandBorderColor">#30FFFFFF</Color>
+            <Color x:Key="AppIslandTextColor">#FCFBF7</Color>
+            <Color x:Key="AppIslandChipColor">#1EFFFFFF</Color>
+            <Color x:Key="AppIslandChipHoverColor">#32FFFFFF</Color>
+            <Color x:Key="AppCategoryFolderColor">#A67526</Color>
+            <Color x:Key="AppCategoryImageColor">#2E7D63</Color>
+            <Color x:Key="AppCategoryDocumentColor">#3869A8</Color>
+            <Color x:Key="AppCategoryMediaColor">#6D51A8</Color>
+            <Color x:Key="AppCategoryArchiveColor">#8C5A3C</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <Color x:Key="OpFieldColor">#282C33</Color>
+            <Color x:Key="OpFieldHoverColor">#323740</Color>
+            <Color x:Key="OpFieldEdgeColor">#00000000</Color>
+            <Color x:Key="OpDividerColor">#3A3E46</Color>
+            <Color x:Key="SystemAccentColor">#C24B44</Color>
+            <Color x:Key="SystemAccentColorLight1">#D2564E</Color>
+            <Color x:Key="SystemAccentColorLight2">#E0665E</Color>
+            <Color x:Key="SystemAccentColorLight3">#F2A5A0</Color>
+            <Color x:Key="SystemAccentColorDark1">#B4423C</Color>
+            <Color x:Key="SystemAccentColorDark2">#A43A34</Color>
+            <Color x:Key="SystemAccentColorDark3">#8C302B</Color>
+            <Color x:Key="AppBackgroundColor">#16181D</Color>
+            <Color x:Key="AppSurfaceColor">#1D2027</Color>
+            <Color x:Key="AppSubtleColor">#191C22</Color>
+            <Color x:Key="AppBorderColor">#343842</Color>
+            <Color x:Key="AppTextColor">#F2F3F6</Color>
+            <Color x:Key="AppSecondaryTextColor">#A8ACB8</Color>
+            <Color x:Key="AppAccentColor">#C24B44</Color>
+            <Color x:Key="AppAccentSecondaryColor">#D2564E</Color>
+            <Color x:Key="AppAccentTertiaryColor">#A63B35</Color>
+            <Color x:Key="AppAccentSubtleColor">#333742</Color>
+            <Color x:Key="AppSelectionHoverColor">#3E4350</Color>
+            <Color x:Key="AppOnAccentColor">#FFFFFF</Color>
+            <Color x:Key="AppWindowOverlayColor">#6616181D</Color>
+            <Color x:Key="AppSpecularRimColor">#1AFFFFFF</Color>
+            <Color x:Key="AppNavigationColor">#2E333E</Color>
+            <Color x:Key="AppGlassContentColor">#EC1B1F26</Color>
+            <Color x:Key="AppGlassPaneColor">#9A222832</Color>
+            <Color x:Key="AppSplitterRestColor">#00000000</Color>
+            <Color x:Key="AppGlassChromeColor">#34384350</Color>
+            <Color x:Key="AppGlassInsetColor">#382C333F</Color>
+            <Color x:Key="AppGlassCardColor">#10FFFFFF</Color>
+            <Color x:Key="AppGlassControlColor">#3E4A5462</Color>
+            <Color x:Key="AppGlassFieldColor">#F0232932</Color>
+            <Color x:Key="AppGlassBorderColor">#22FFFFFF</Color>
+            <Color x:Key="AppGlassPopupColor">#2E3642</Color>
+            <Color x:Key="AppPopupFallbackColor">#242C36</Color>
+            <Color x:Key="AppAccentTextColor">#EC7068</Color>
+            <Color x:Key="AppAccentSoftColor">#2CC24B44</Color>
+            <Color x:Key="AppSuccessColor">#8CE0AE</Color>
+            <Color x:Key="AppDiffAddedBackgroundColor">#296ED69A</Color>
+            <Color x:Key="AppDiffAddedTextColor">#8CE0AE</Color>
+            <Color x:Key="AppDiffRemovedTextColor">#8E93A2</Color>
+            <Color x:Key="AppIslandBackgroundColor">#EE222731</Color>
+            <Color x:Key="AppIslandBorderColor">#30FFFFFF</Color>
+            <Color x:Key="AppIslandTextColor">#F5F6F8</Color>
+            <Color x:Key="AppIslandChipColor">#1AFFFFFF</Color>
+            <Color x:Key="AppIslandChipHoverColor">#2EFFFFFF</Color>
+            <Color x:Key="AppCategoryFolderColor">#E2AC54</Color>
+            <Color x:Key="AppCategoryImageColor">#64C49B</Color>
+            <Color x:Key="AppCategoryDocumentColor">#6FA3E8</Color>
+            <Color x:Key="AppCategoryMediaColor">#AC92E6</Color>
+            <Color x:Key="AppCategoryArchiveColor">#D6946B</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <StaticResource x:Key="OpFieldColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="OpFieldHoverColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="OpFieldEdgeColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="OpDividerColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="SystemAccentColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="SystemAccentColorLight1" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="SystemAccentColorLight2" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="SystemAccentColorLight3" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="SystemAccentColorDark1" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="SystemAccentColorDark2" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="SystemAccentColorDark3" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppBackgroundColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppSurfaceColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppSubtleColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppBorderColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppTextColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppSecondaryTextColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppAccentColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppAccentSecondaryColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppAccentTertiaryColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppAccentSubtleColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppSelectionHoverColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppOnAccentColor" ResourceKey="SystemColorHighlightTextColor" />
+            <StaticResource x:Key="AppWindowOverlayColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppSpecularRimColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppNavigationColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppGlassContentColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppGlassPaneColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppSplitterRestColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppGlassChromeColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppGlassInsetColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppGlassCardColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppGlassControlColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppGlassFieldColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppGlassBorderColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppGlassPopupColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppPopupFallbackColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppAccentTextColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppAccentSoftColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppSuccessColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppDiffAddedBackgroundColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppDiffAddedTextColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppDiffRemovedTextColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppIslandBackgroundColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="AppIslandBorderColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppIslandTextColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppIslandChipColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppIslandChipHoverColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppCategoryFolderColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppCategoryImageColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppCategoryDocumentColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppCategoryMediaColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="AppCategoryArchiveColor" ResourceKey="SystemColorWindowTextColor" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+    <local:WorkspacePalette x:Key="Palette_charcoal" Light="False" Window="#1A1D24" Rail="#13151B" Card="#232732"
+        Text="#F2F4F7" Secondary="#9CA3B0" Accent="#C24B44" Hover="#CF564F" OnAccent="#FFFFFF" />
+    <local:WorkspacePalette x:Key="Palette_ocean" Light="False" Window="#141B26" Rail="#0F151F" Card="#1D2737"
+        Text="#EEF3FA" Secondary="#94A6BF" Accent="#3B82F6" Hover="#4F8FF7" OnAccent="#FFFFFF" />
+    <local:WorkspacePalette x:Key="Palette_forest" Light="False" Window="#141B18" Rail="#0F1512" Card="#1D2823"
+        Text="#EEF4F1" Secondary="#93A99E" Accent="#2F9E6E" Hover="#37AF7B" OnAccent="#FFFFFF" />
+    <local:WorkspacePalette x:Key="Palette_espresso" Light="False" Window="#1D1916" Rail="#161311" Card="#28221F"
+        Text="#F5F0EB" Secondary="#A89C92" Accent="#C87A41" Hover="#D4874E" OnAccent="#FFFFFF" />
+    <local:WorkspacePalette x:Key="Palette_sand" Light="True" Window="#F8F7F2" Rail="#ECEDE6" Card="#FCFBF7"
+        Text="#1F221C" Secondary="#5E635A" Accent="#292E25" Hover="#383F33" OnAccent="#FDFDF9" />
+    <local:WorkspacePalette x:Key="Palette_frost" Light="True" Window="#F5F8FC" Rail="#E9EFF7" Card="#FFFFFF"
+        Text="#18202C" Secondary="#596577" Accent="#2563EB" Hover="#1D4ED8" OnAccent="#FFFFFF" />
+    <local:WorkspacePalette x:Key="Palette_linen" Light="True" Window="#F9F5EE" Rail="#EFE8DC" Card="#FDFBF7"
+        Text="#26201B" Secondary="#6B6056" Accent="#9A4D2E" Hover="#844025" OnAccent="#FFFFFF" />
+    <local:WorkspacePalette x:Key="Palette_studio" Light="True" Window="#FAFAFC" Rail="#F0F0F4" Card="#FFFFFF"
+        Text="#141417" Secondary="#5E5E67" Accent="#18181B" Hover="#27272A" OnAccent="#FFFFFF" />
+</ResourceDictionary>

@@ -1,0 +1,9 @@
+﻿<UserControl x:Class="FileAssistant.App.Features.Convert.ConversionView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:input="using:FileAssistant.App.Features.FileInput" xmlns:local="using:FileAssistant.App.Features.Convert">
+    <input:FileInputView x:Name="InputView" ViewModel="{x:Bind ViewModel.Input}" OperationTitle="{x:Bind ViewModel.PanelTitle, Mode=OneWay}"
+        InputEnabled="{x:Bind ViewModel.CanChangeInput, Mode=OneWay}"
+        SearchRequested="Input_SearchRequested" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForConversionRequested="Input_FilesForConversionRequested" FilesForNamingRequested="Input_FilesForNamingRequested">
+        <input:FileInputView.OperationContent><local:ConversionOptionsView x:Name="OptionsPanel" ViewModel="{x:Bind ViewModel}" FilesForNamingRequested="Input_FilesForNamingRequested" FilesForCopyRequested="Input_FilesForCopyRequested" /></input:FileInputView.OperationContent>
+    </input:FileInputView>
+</UserControl>

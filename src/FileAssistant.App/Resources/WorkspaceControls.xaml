@@ -1,0 +1,1001 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FileAssistant.App.Controls">
+    <Style x:Key="WorkspaceListItemStyle" TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+        <Setter Property="controls:RowDensity.IsEnabled" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="Margin" Value="6,1" />
+        <Setter Property="MinHeight" Value="48" />
+        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <ListViewItemPresenter
+                        x:Name="Root"
+                        ContentTransitions="{TemplateBinding ContentTransitions}"
+                        Control.IsTemplateFocusTarget="True"
+                        FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
+                        FocusVisualPrimaryBrush="{TemplateBinding FocusVisualPrimaryBrush}"
+                        FocusVisualPrimaryThickness="{TemplateBinding FocusVisualPrimaryThickness}"
+                        FocusVisualSecondaryBrush="{TemplateBinding FocusVisualSecondaryBrush}"
+                        FocusVisualSecondaryThickness="{TemplateBinding FocusVisualSecondaryThickness}"
+                        SelectionCheckMarkVisualEnabled="{ThemeResource ListViewItemSelectionCheckMarkVisualEnabled}"
+                        CheckBrush="{ThemeResource WorkspaceOnAccentBrush}"
+                        CheckBoxBrush="{ThemeResource ListViewItemCheckBoxBrush}"
+                        DragBackground="{ThemeResource ListViewItemDragBackground}"
+                        DragForeground="{ThemeResource ListViewItemDragForeground}"
+                        FocusBorderBrush="{ThemeResource ListViewItemFocusBorderBrush}"
+                        FocusSecondaryBorderBrush="{ThemeResource ListViewItemFocusSecondaryBorderBrush}"
+                        PlaceholderBackground="{ThemeResource ListViewItemPlaceholderBackground}"
+                        PointerOverBackground="{ThemeResource ListViewItemBackgroundPointerOver}"
+                        PointerOverForeground="{ThemeResource ListViewItemForegroundPointerOver}"
+                        SelectedBackground="{ThemeResource ListViewItemBackgroundSelected}"
+                        SelectedForeground="{ThemeResource ListViewItemForegroundSelected}"
+                        SelectedPointerOverBackground="{ThemeResource ListViewItemBackgroundSelectedPointerOver}"
+                        PressedBackground="{ThemeResource ListViewItemBackgroundPressed}"
+                        SelectedPressedBackground="{ThemeResource ListViewItemBackgroundSelectedPressed}"
+                        SelectedDisabledBackground="{ThemeResource ListViewItemBackgroundSelectedDisabled}"
+                        DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
+                        DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
+                        ReorderHintOffset="{ThemeResource ListViewItemReorderHintThemeOffset}"
+                        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                        ContentMargin="{TemplateBinding Padding}"
+                        CheckMode="{ThemeResource ListViewItemCheckMode}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        CheckPressedBrush="{ThemeResource WorkspaceOnAccentBrush}"
+                        CheckDisabledBrush="{ThemeResource ListViewItemCheckDisabledBrush}"
+                        CheckBoxPointerOverBrush="{ThemeResource ListViewItemCheckBoxPointerOverBrush}"
+                        CheckBoxPressedBrush="{ThemeResource ListViewItemCheckBoxPressedBrush}"
+                        CheckBoxDisabledBrush="{ThemeResource ListViewItemCheckBoxDisabledBrush}"
+                        CheckBoxSelectedBrush="{ThemeResource WorkspaceAccentBrush}"
+                        CheckBoxSelectedPointerOverBrush="{ThemeResource AccentButtonBackgroundPointerOver}"
+                        CheckBoxSelectedPressedBrush="{ThemeResource AccentButtonBackgroundPressed}"
+                        CheckBoxSelectedDisabledBrush="{ThemeResource ListViewItemCheckBoxSelectedDisabledBrush}"
+                        CheckBoxBorderBrush="{ThemeResource ListViewItemCheckBoxBorderBrush}"
+                        CheckBoxPointerOverBorderBrush="{ThemeResource ListViewItemCheckBoxPointerOverBorderBrush}"
+                        CheckBoxPressedBorderBrush="{ThemeResource ListViewItemCheckBoxPressedBorderBrush}"
+                        CheckBoxDisabledBorderBrush="{ThemeResource ListViewItemCheckBoxDisabledBorderBrush}"
+                        CheckBoxCornerRadius="{ThemeResource ListViewItemCheckBoxCornerRadius}"
+                        SelectionIndicatorCornerRadius="{ThemeResource ListViewItemSelectionIndicatorCornerRadius}"
+                        SelectionIndicatorVisualEnabled="False"
+                        SelectionIndicatorBrush="{ThemeResource SelectionIndicatorBrush}"
+                        SelectionIndicatorPointerOverBrush="{ThemeResource SelectionIndicatorBrush}"
+                        SelectionIndicatorPressedBrush="{ThemeResource SelectionIndicatorBrush}"
+                        SelectionIndicatorDisabledBrush="{ThemeResource ListViewItemSelectionIndicatorDisabledBrush}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <controls:FileCategoryBrushConverter x:Key="CategoryBrush" />
+    <Style x:Key="WorkspaceMarqueeStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceMarqueeFillBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceAccentBrush}" />
+        <Setter Property="BorderThickness" Value="1.5" />
+        <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style x:Key="WorkspaceCenteredStateStyle" TargetType="ContentControl">
+        <Setter Property="Padding" Value="24,16" />
+        <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ContentControl">
+            <ScrollViewer x:Name="StateViewport" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Grid MinHeight="{Binding ViewportHeight, ElementName=StateViewport}">
+                    <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                        Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Grid>
+            </ScrollViewer>
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="WorkspaceNavigationButtonStyle" TargetType="ToggleButton">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="12,7" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="NavRoot" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Checked"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceNavigationSelectedBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="NavRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter x:Name="NavContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspacePrimaryNavigationStyle" TargetType="ToggleButton" BasedOn="{StaticResource WorkspaceNavigationButtonStyle}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="11,6" />
+    </Style>
+    <Style x:Key="WorkspaceNavGroupHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="Opacity" Value="0.78" />
+        <Setter Property="Margin" Value="10,10,8,3" />
+    </Style>
+    <Style x:Key="WorkspaceLeftNavItemStyle" TargetType="ToggleButton">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="FocusVisualMargin" Value="-1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Checked"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceNavigationSelectedBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="NavContent.FontWeight" Value="SemiBold" /><Setter Target="ActivePill.Opacity" Value="1" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="NavContent.FontWeight" Value="SemiBold" /><Setter Target="ActivePill.Opacity" Value="1" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="NavContent.FontWeight" Value="SemiBold" /><Setter Target="ActivePill.Opacity" Value="1" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="NavRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Border x:Name="NavRoot" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="NavContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="ActivePill" Width="3" Height="16" CornerRadius="1.5" Background="{ThemeResource WorkspaceAccentBrush}"
+                            HorizontalAlignment="Left" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceInsetSheetStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+    </Style>
+    <Style x:Key="WorkspaceBentoCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceCardBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="12,10" />
+    </Style>
+    <Style x:Key="WorkspacePresetCardStyle" TargetType="ToggleButton">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="11,9" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceCardBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="CardRoot" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="CardRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="CardRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Checked"><VisualState.Setters><Setter Target="CardRoot.Background" Value="{ThemeResource WorkspaceAccentSoftBrush}" /><Setter Target="CardRoot.BorderBrush" Value="{ThemeResource WorkspaceAccentBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="CardRoot.Background" Value="{ThemeResource WorkspaceAccentSoftBrush}" /><Setter Target="CardRoot.BorderBrush" Value="{ThemeResource WorkspaceAccentBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="CardRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="CardRoot.BorderBrush" Value="{ThemeResource WorkspaceAccentBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="CardRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid>
+                            <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                            <Border Height="1" VerticalAlignment="Top" Margin="2,-9,2,0" Background="{ThemeResource WorkspaceSpecularRimBrush}" IsHitTestVisible="False" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceTokenPillStyle" TargetType="Button">
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Padding" Value="9,3" />
+        <Setter Property="CornerRadius" Value="13" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="WorkspaceFloatingIslandStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceIslandBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceIslandBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="Padding" Value="14,6,8,6" />
+    </Style>
+    <Style x:Key="WorkspaceIslandActionStyle" TargetType="Button">
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Padding" Value="10,3" />
+        <Setter Property="CornerRadius" Value="13" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceIslandTextBrush}" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceIslandChipBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ChipRoot" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="ChipRoot.Background" Value="{ThemeResource WorkspaceIslandChipHoverBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="ChipRoot.Background" Value="{ThemeResource WorkspaceIslandChipHoverBrush}" /><Setter Target="ChipRoot.Opacity" Value="0.85" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="ChipRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- Shared by title bar buttons and the sidebar collapse button. -->
+    <Style x:Key="TitleBarChromeIconStyle" TargetType="Button">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="IconRoot" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter x:Name="IconPresenter" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceIconButtonStyle" TargetType="Button">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinWidth" Value="24" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="IconRoot"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        UseLayoutRounding="True">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter
+                            x:Name="IconPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            ContentTransitions="{TemplateBinding ContentTransitions}"
+                            Foreground="{TemplateBinding Foreground}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            UseLayoutRounding="True" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceParentFolderIconStyle" TargetType="FontIcon">
+        <Setter Property="Glyph" Value="&#xE72B;" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+    <!-- Each button needs its own geometry instance; PathIcon.Data cannot have multiple owners.
+         Uniform 1.4 DIP strokes with rounded corners avoid subpixel dropouts at 125%/150% DPI. -->
+    <DataTemplate x:Key="WorkspaceLeftPaneIconTemplate">
+        <PathIcon Width="16" Height="16" UseLayoutRounding="True" Data="F0 M2.6,1.8 H13.4 A1.8,1.8 0 0 1 15.2,3.6 V12.4 A1.8,1.8 0 0 1 13.4,14.2 H2.6 A1.8,1.8 0 0 1 0.8,12.4 V3.6 A1.8,1.8 0 0 1 2.6,1.8 Z M2.2,3.2 H5.4 V12.8 H2.2 Z M6.8,3.2 H13.8 V12.8 H6.8 Z" />
+    </DataTemplate>
+    <DataTemplate x:Key="WorkspaceRightPaneIconTemplate">
+        <PathIcon Width="16" Height="16" UseLayoutRounding="True" Data="F0 M2.6,1.8 H13.4 A1.8,1.8 0 0 1 15.2,3.6 V12.4 A1.8,1.8 0 0 1 13.4,14.2 H2.6 A1.8,1.8 0 0 1 0.8,12.4 V3.6 A1.8,1.8 0 0 1 2.6,1.8 Z M2.2,3.2 H9.2 V12.8 H2.2 Z M10.6,3.2 H13.8 V12.8 H10.6 Z" />
+    </DataTemplate>
+    <Style x:Key="WorkspaceSurfaceStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0" /><Setter Property="CornerRadius" Value="0" />
+    </Style>
+    <Style x:Key="WorkspacePageLayoutStyle" TargetType="Grid">
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="RowSpacing" Value="0" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSurfaceBrush}" />
+    </Style>
+    <Style x:Key="WorkspacePageHeaderStyle" TargetType="Grid">
+        <Setter Property="MinHeight" Value="60" />
+        <Setter Property="Padding" Value="18,10" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="ColumnSpacing" Value="12" />
+    </Style>
+    <Style x:Key="WorkspaceTaskToolbarStyle" TargetType="Grid" BasedOn="{StaticResource WorkspacePageHeaderStyle}">
+        <Setter Property="MinHeight" Value="52" />
+        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="ColumnSpacing" Value="0" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSurfaceBrush}" />
+    </Style>
+    <!-- Shared controls for the single-row task toolbars. -->
+    <Style x:Key="WorkspaceToolbarButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="MinHeight" Value="32" /><Setter Property="Padding" Value="12,5" />
+        <Setter Property="FontSize" Value="12" /><Setter Property="CornerRadius" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="WorkspaceModalCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceDialogBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+    </Style>
+    <Style x:Key="WorkspaceSubtleCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style x:Key="WorkspacePillBadgeStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="7,1" />
+    </Style>
+    <Style x:Key="WorkspaceQuickMenuItemStyle" TargetType="Button">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="ItemRoot"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        UseLayoutRounding="True">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="ItemRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="ItemRoot.Background" Value="{ThemeResource WorkspaceAccentSubtleBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="ItemRoot.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Foreground="{TemplateBinding Foreground}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceLinkButtonStyle" TargetType="Button">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="Padding" Value="5,2" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="LinkRoot" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="LinkRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                        <Setter Target="LinkPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="LinkRoot.Background" Value="{ThemeResource WorkspaceAccentSubtleBrush}" />
+                                        <Setter Target="LinkPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="LinkRoot.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter x:Name="LinkPresenter" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceSplitButtonShellStyle" TargetType="Border">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+    </Style>
+    <Style x:Key="WorkspaceSplitSegmentButtonStyle" TargetType="Button">
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="MinWidth" Value="24" />
+        <Setter Property="Padding" Value="11,0" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="SegmentRoot"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        UseLayoutRounding="True">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="SegmentRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="SegmentRoot.Background" Value="{ThemeResource WorkspaceAccentSubtleBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="SegmentRoot.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter
+                            x:Name="SegmentPresenter"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Foreground="{TemplateBinding Foreground}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            UseLayoutRounding="True" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceToolbarAccentStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+        <Setter Property="MinHeight" Value="32" /><Setter Property="Padding" Value="12,5" />
+        <Setter Property="FontSize" Value="12" /><Setter Property="CornerRadius" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="WorkspaceToolbarFieldStyle" TargetType="TextBox">
+        <Setter Property="MinHeight" Value="34" /><Setter Property="Padding" Value="10,7,8,7" />
+        <Setter Property="FontSize" Value="12" /><Setter Property="CornerRadius" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" /><Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" /><Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="WorkspaceToolbarModeStyle" TargetType="ToggleButton" BasedOn="{StaticResource WorkspaceNavigationButtonStyle}">
+        <Setter Property="MinHeight" Value="32" /><Setter Property="Padding" Value="10,5" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="WorkspacePageTitleStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style x:Key="WorkspacePaneHeaderStyle" TargetType="Border">
+        <Setter Property="MinHeight" Value="48" />
+        <Setter Property="Padding" Value="16,7,8,7" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style x:Key="WorkspacePaneTitleStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style x:Key="WorkspaceListToolbarStyle" TargetType="Grid">
+        <Setter Property="Padding" Value="14,8" />
+        <Setter Property="MinHeight" Value="54" />
+        <Setter Property="ColumnSpacing" Value="8" />
+    </Style>
+    <Style x:Key="WorkspacePathBarStyle" TargetType="Grid">
+        <Setter Property="Padding" Value="14,7,8,7" />
+        <Setter Property="MinHeight" Value="48" />
+        <Setter Property="ColumnSpacing" Value="8" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style x:Key="WorkspaceOperationFooterStyle" TargetType="Border">
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+    </Style>
+    <Style x:Key="WorkspaceScopeStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="MaxLines" Value="2" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style x:Key="WorkspacePrimaryActionStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="12,5" />
+        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+    <Style x:Key="WorkspaceColumnHeaderButtonStyle" TargetType="Button">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="HeaderRoot" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="HeaderRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                        <Setter Target="HeaderPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="HeaderRoot.Background" Value="{ThemeResource WorkspaceAccentSubtleBrush}" />
+                                        <Setter Target="HeaderPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter x:Name="HeaderPresenter" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceSectionLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style x:Key="WorkspaceDangerActionStyle" TargetType="Button" BasedOn="{StaticResource WorkspacePrimaryActionStyle}">
+        <Setter Property="Background" Value="{ThemeResource SystemFillColorCriticalBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource SystemFillColorCriticalBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource SystemFillColorCriticalBrush}" />
+    </Style>
+    <!-- Labels inside a tree row share its hover/selection surface. -->
+    <Style x:Key="WorkspaceFolderIconStyle" TargetType="FontIcon">
+        <Setter Property="Glyph" Value="&#xE8B7;" /><Setter Property="FontSize" Value="13" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="WorkspaceFolderNameStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" /><Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="WorkspaceFolderMetadataStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" /><Setter Property="Opacity" Value="0.8" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="WorkspaceTreeLabelButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" /><Setter Property="MinWidth" Value="0" /><Setter Property="MinHeight" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" /><Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+            <ContentPresenter Background="Transparent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Padding="{TemplateBinding Padding}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" />
+        </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="WorkspaceFolderTreeItemStyle" TargetType="TreeViewItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0,0,6,0" /><Setter Property="Margin" Value="0,1" />
+        <Setter Property="MinHeight" Value="30" /><Setter Property="MinWidth" Value="0" /><Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="GlyphBrush" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TreeViewItem">
+                    <controls:DropTargetSurface x:Name="ContentPresenterGrid" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="ContentPresenter.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="ExpandedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource WorkspaceAccentSubtleBrush}" /><Setter Target="ContentPresenter.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="ExpandedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Selected"><VisualState.Setters><Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource WorkspaceAccentSubtleBrush}" /><Setter Target="ContentPresenter.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="ExpandedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="PointerOverSelected"><VisualState.Setters><Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="ContentPresenter.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="ExpandedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="PressedSelected"><VisualState.Setters><Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="ContentPresenter.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="CollapsedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="ExpandedGlyph.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="ContentPresenterGrid.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="SelectedDisabled"><VisualState.Setters><Setter Target="ContentPresenterGrid.Opacity" Value="0.45" /><Setter Target="ContentPresenterGrid.Background" Value="{ThemeResource WorkspaceAccentSubtleBrush}" /><Setter Target="ContentPresenter.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid Padding="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TreeViewItemTemplateSettings.Indentation}">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="20" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid x:Name="ExpandCollapseChevron" Background="Transparent" Opacity="{TemplateBinding GlyphOpacity}">
+                                <TextBlock x:Name="CollapsedGlyph" Foreground="{TemplateBinding GlyphBrush}" Width="12" Height="12" Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TreeViewItemTemplateSettings.CollapsedGlyphVisibility}" FontSize="{TemplateBinding GlyphSize}" Text="{TemplateBinding CollapsedGlyph}" FontFamily="{StaticResource SymbolThemeFontFamily}" Padding="2" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" IsTextScaleFactorEnabled="False" IsHitTestVisible="False" />
+                                <TextBlock x:Name="ExpandedGlyph" Foreground="{TemplateBinding GlyphBrush}" Width="12" Height="12" Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TreeViewItemTemplateSettings.ExpandedGlyphVisibility}" FontSize="{TemplateBinding GlyphSize}" Text="{TemplateBinding ExpandedGlyph}" FontFamily="{StaticResource SymbolThemeFontFamily}" Padding="2" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" IsTextScaleFactorEnabled="False" IsHitTestVisible="False" />
+                            </Grid>
+                            <ContentPresenter x:Name="ContentPresenter" Grid.Column="1" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Margin="{TemplateBinding Padding}" />
+                        </Grid>
+                    </controls:DropTargetSurface>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="WorkspaceTileItemStyle" TargetType="ListViewItem">
+        <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}" />
+        <Setter Property="FontSize" Value="{ThemeResource ControlContentThemeFontSize}" />
+        <Setter Property="Background" Value="{ThemeResource ListViewItemBackground}" />
+        <Setter Property="Foreground" Value="{ThemeResource ListViewItemForeground}" />
+        <Setter Property="TabNavigation" Value="Local" />
+        <Setter Property="IsHoldingEnabled" Value="True" />
+        <Setter Property="Padding" Value="5" />
+        <Setter Property="Margin" Value="6" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="MinWidth" Value="{ThemeResource ListViewItemMinWidth}" />
+        <Setter Property="MinHeight" Value="{ThemeResource ListViewItemMinHeight}" />
+        <Setter Property="AllowDrop" Value="False" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="FocusVisualMargin" Value="1" />
+        <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource ListViewItemFocusVisualPrimaryBrush}" />
+        <Setter Property="FocusVisualPrimaryThickness" Value="2" />
+        <Setter Property="FocusVisualSecondaryBrush" Value="{ThemeResource ListViewItemFocusVisualSecondaryBrush}" />
+        <Setter Property="FocusVisualSecondaryThickness" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <ListViewItemPresenter x:Name="Root" ContentTransitions="{TemplateBinding ContentTransitions}" Control.IsTemplateFocusTarget="True" FocusVisualMargin="{TemplateBinding FocusVisualMargin}" FocusVisualPrimaryBrush="{TemplateBinding FocusVisualPrimaryBrush}" FocusVisualPrimaryThickness="{TemplateBinding FocusVisualPrimaryThickness}" FocusVisualSecondaryBrush="{TemplateBinding FocusVisualSecondaryBrush}" FocusVisualSecondaryThickness="{TemplateBinding FocusVisualSecondaryThickness}" SelectionCheckMarkVisualEnabled="{ThemeResource ListViewItemSelectionCheckMarkVisualEnabled}" CheckBrush="{ThemeResource WorkspaceOnAccentBrush}" CheckBoxBrush="{ThemeResource ListViewItemCheckBoxBrush}" DragBackground="{ThemeResource ListViewItemDragBackground}" DragForeground="{ThemeResource ListViewItemDragForeground}" FocusBorderBrush="{ThemeResource ListViewItemFocusBorderBrush}" FocusSecondaryBorderBrush="{ThemeResource ListViewItemFocusSecondaryBorderBrush}" PlaceholderBackground="{ThemeResource ListViewItemPlaceholderBackground}" PointerOverBackground="{ThemeResource ListViewItemBackgroundPointerOver}" PointerOverForeground="{ThemeResource ListViewItemForegroundPointerOver}" SelectedBackground="{ThemeResource ListViewItemBackgroundSelected}" SelectedForeground="{ThemeResource ListViewItemForegroundSelected}" SelectedPointerOverBackground="{ThemeResource ListViewItemBackgroundSelectedPointerOver}" PressedBackground="{ThemeResource ListViewItemBackgroundPressed}" SelectedPressedBackground="{ThemeResource ListViewItemBackgroundSelectedPressed}" DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}" DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}" ReorderHintOffset="{ThemeResource ListViewItemReorderHintThemeOffset}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" ContentMargin="{TemplateBinding Padding}" CheckMode="Overlay" CornerRadius="{TemplateBinding CornerRadius}" CheckPressedBrush="{ThemeResource WorkspaceOnAccentBrush}" CheckDisabledBrush="{ThemeResource ListViewItemCheckDisabledBrush}" CheckBoxPointerOverBrush="{ThemeResource ListViewItemCheckBoxPointerOverBrush}" CheckBoxPressedBrush="{ThemeResource ListViewItemCheckBoxPressedBrush}" CheckBoxDisabledBrush="{ThemeResource ListViewItemCheckBoxDisabledBrush}" CheckBoxSelectedBrush="{ThemeResource WorkspaceAccentBrush}" CheckBoxSelectedPointerOverBrush="{ThemeResource AccentButtonBackgroundPointerOver}" CheckBoxSelectedPressedBrush="{ThemeResource AccentButtonBackgroundPressed}" CheckBoxSelectedDisabledBrush="{ThemeResource ListViewItemCheckBoxSelectedDisabledBrush}" CheckBoxBorderBrush="{ThemeResource ListViewItemCheckBoxBorderBrush}" CheckBoxPointerOverBorderBrush="{ThemeResource ListViewItemCheckBoxPointerOverBorderBrush}" CheckBoxPressedBorderBrush="{ThemeResource ListViewItemCheckBoxPressedBorderBrush}" CheckBoxDisabledBorderBrush="{ThemeResource ListViewItemCheckBoxDisabledBorderBrush}" CheckBoxCornerRadius="{ThemeResource ListViewItemCheckBoxCornerRadius}" SelectionIndicatorCornerRadius="{ThemeResource ListViewItemSelectionIndicatorCornerRadius}" SelectionIndicatorVisualEnabled="False" SelectionIndicatorBrush="{ThemeResource SelectionIndicatorBrush}" SelectionIndicatorPointerOverBrush="{ThemeResource SelectionIndicatorBrush}" SelectionIndicatorPressedBrush="{ThemeResource SelectionIndicatorBrush}" SelectionIndicatorDisabledBrush="{ThemeResource ListViewItemSelectionIndicatorDisabledBrush}" SelectedDisabledBackground="{ThemeResource ListViewItemBackgroundSelectedDisabled}" />
+
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- Each template instance owns its native input resources. Other panels keep the standard WinUI theme. -->
+    <ControlTemplate x:Key="OpCompactBodyTemplate" TargetType="ContentControl">
+        <ContentPresenter Content="{TemplateBinding Content}" HorizontalContentAlignment="Stretch">
+            <ContentPresenter.Resources>
+                <ResourceDictionary>
+                    <x:Double x:Key="NumberBoxMinWidth">0</x:Double>
+                    <x:Double x:Key="TextControlThemeMinHeight">32</x:Double>
+                    <Thickness x:Key="TextControlThemePadding">8,6,6,6</Thickness>
+                    <Thickness x:Key="ComboBoxEditableTextPadding">8,6,6,6</Thickness>
+                    <Thickness x:Key="ComboBoxPadding">8,5,8,5</Thickness>
+                    <Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
+                    <SolidColorBrush x:Key="TextControlBackground" Color="{ThemeResource OpFieldColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{ThemeResource OpFieldColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundFocused" Color="{ThemeResource OpFieldColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{ThemeResource OpFieldHoverColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{ThemeResource OpFieldHoverColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{ThemeResource OpFieldHoverColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{ThemeResource OpFieldHoverColor}" />
+                    <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="{ThemeResource OpFieldHoverColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="{ThemeResource OpFieldEdgeColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{ThemeResource AppAccentColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="{ThemeResource AppAccentColor}" />
+                    <ResourceDictionary.ThemeDictionaries>
+                        <ResourceDictionary x:Key="Light">
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{ThemeResource AppNavigationColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{ThemeResource AppNavigationColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="{ThemeResource AppNavigationColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{ThemeResource AppTextColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{ThemeResource AppTextColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{ThemeResource AppTextColor}" />
+                        </ResourceDictionary>
+                        <ResourceDictionary x:Key="Dark">
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{ThemeResource AppNavigationColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{ThemeResource AppNavigationColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="{ThemeResource AppNavigationColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{ThemeResource AppTextColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{ThemeResource AppTextColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{ThemeResource AppTextColor}" />
+                        </ResourceDictionary>
+                        <ResourceDictionary x:Key="HighContrast">
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="{ThemeResource SystemColorHighlightColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="{ThemeResource SystemColorHighlightColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="{ThemeResource SystemColorHighlightColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                            <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="{ThemeResource SystemColorHighlightTextColor}" />
+                        </ResourceDictionary>
+                    </ResourceDictionary.ThemeDictionaries>
+                </ResourceDictionary>
+            </ContentPresenter.Resources>
+        </ContentPresenter>
+    </ControlTemplate>
+    <Style x:Key="OpPropertyRowStyle" TargetType="Grid">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="ColumnSpacing" Value="8" />
+    </Style>
+    <Style x:Key="OpLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style x:Key="OpDividerStyle" TargetType="Border">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{ThemeResource OpDividerBrush}" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+    <Style x:Key="OpPrimaryCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource OpCardBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpDividerBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="9,3" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style x:Key="OpPreviewStyle" TargetType="Border">
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="9,4" />
+        <Setter Property="Background" Value="{ThemeResource OpSoftBrush}" />
+        <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style x:Key="OpPreviewChipStyle" TargetType="Border">
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Background" Value="{ThemeResource OpSuccessSoftBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpFieldEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="OpSoftTextBoxStyle" TargetType="TextBox">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,6,6,6" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{ThemeResource OpSoftBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpFieldEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="OpMultilineSoftTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource OpSoftTextBoxStyle}">
+        <Setter Property="Padding" Value="8,7" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Top" />
+    </Style>
+    <Style x:Key="OpSoftNumberBoxStyle" TargetType="NumberBox">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="SpinButtonPlacementMode" Value="Hidden" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,6,6,6" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{ThemeResource OpSoftBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpFieldEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="OpSoftComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,5,8,5" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{ThemeResource OpSoftBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpFieldEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style x:Key="OpSoftDropDownStyle" TargetType="DropDownButton">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="8,5,8,5" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{ThemeResource OpSoftBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpFieldEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style x:Key="OpPlainDropDownStyle" TargetType="DropDownButton" BasedOn="{StaticResource OpSoftDropDownStyle}">
+        <Setter Property="Background" Value="{ThemeResource OpCardBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Right" />
+        <Setter Property="Padding" Value="3,3" />
+    </Style>
+    <Style x:Key="OpPillButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="Padding" Value="7,2" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Background" Value="{ThemeResource OpSoftBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpFieldEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="OpPillToggleStyle" TargetType="ToggleButton">
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="24" />
+        <Setter Property="Padding" Value="7,2" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Background" Value="{ThemeResource OpSoftBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpFieldEdgeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="OpDisclosureStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="Padding" Value="0,3" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+        <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style x:Key="OpFooterStyle" TargetType="Border">
+        <Setter Property="Padding" Value="12,7" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
+        <Setter Property="BorderBrush" Value="{ThemeResource OpDividerBrush}" />
+    </Style>
+    <Style x:Key="OpActionStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl x:Class="FileAssistant.App.Features.CreateOrRename.NamingDirectoryTreeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileAssistant.App.Features.CreateOrRename">
+    <ContentControl IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+        <Grid Margin="8,8,8,4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="勾选要添加内容的文件夹" Visibility="{x:Bind ViewModel.IsChoosingCreationTargets, Mode=OneWay}" Margin="4,0,4,6" FontSize="12" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+            <Grid x:Name="CreationTreeArea" Grid.Row="1" Background="Transparent" ContextRequested="Tree_ContextRequested" AllowDrop="True" DragEnter="TreeArea_DragOver" DragOver="TreeArea_DragOver" Drop="TreeArea_Drop" DragLeave="TreeArea_DragLeave">
+                <TreeView x:Name="CreationTree" SelectionMode="Single" SelectionChanged="CreationTree_SelectionChanged" CanDragItems="True" CanReorderItems="False" AllowDrop="True" DragItemsStarting="CreationTree_DragItemsStarting" DragItemsCompleted="CreationTree_DragItemsCompleted" ItemContainerStyle="{StaticResource WorkspaceFolderTreeItemStyle}" AutomationProperties.Name="创建位置与待创建目录树">
+                    <TreeView.ItemTemplate>
+                        <DataTemplate x:DataType="TreeViewNode">
+                            <Grid Tag="{x:Bind ((local:DirectoryDraft)Content), Mode=OneWay}" ToolTipService.ToolTip="{x:Bind ((local:DirectoryDraft)Content).DisplayPath, Mode=OneWay}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Visibility="{x:Bind ((local:DirectoryDraft)Content).ShowTargetCheckBox, Mode=OneWay}" IsChecked="{x:Bind ((local:DirectoryDraft)Content).IsTarget, Mode=OneWay}" Tag="{x:Bind ((local:DirectoryDraft)Content), Mode=OneWay}" Click="Target_Click" MinWidth="0" Padding="0" Margin="0,0,6,0" AutomationProperties.Name="{x:Bind ((local:DirectoryDraft)Content).Name, Mode=OneWay}" />
+                                <Grid Grid.Column="1" ColumnSpacing="6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon Style="{StaticResource WorkspaceFolderIconStyle}" Foreground="{ThemeResource WorkspaceCategoryFolderBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{x:Bind ((local:DirectoryDraft)Content).Name, Mode=OneWay}" Style="{StaticResource WorkspaceFolderNameStyle}" />
+                                    <TextBlock Grid.Column="2" Text="{x:Bind ((local:DirectoryDraft)Content).NavigationStatus, Mode=OneWay}" Style="{StaticResource WorkspaceFolderMetadataStyle}" />
+                                </Grid>
+                            </Grid>
+                        </DataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </Grid>
+        </Grid>
+    </ContentControl>
+</UserControl>

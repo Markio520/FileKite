@@ -1,0 +1,40 @@
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using FileAssistant.Core.Engines;
+
+namespace FileAssistant.App.Features.Tasks;
+
+public partial class ProcessingJob(int id, string name, Action cancel) : ObservableObject
+{
+    internal event Action<ProcessingJob, IEnumerable<string>>? Finished;
+    public int Id { get; } = id;
+    public string Name { get; } = name;
+    [ObservableProperty] public partial string Status { get; set; } = "正在处理";
+    [ObservableProperty] public partial double Progress { get; set; }
+    [ObservableProperty, NotifyCanExecuteChangedFor(nameof(CancelCommand))] public partial bool IsRunning { get; set; } = true;
+    public ObservableCollection<string> Details { get; } = [];
+    [RelayCommand(CanExecute = nameof(IsRunning))] private void Cancel() { if (IsRunning) { Status = "正在取消…"; cancel(); } }
+    public void Update(ProcessingProgress value)
+    {
+        if (!IsRunning) return;
+        Progress = value.TotalBytes is > 0 ? Math.Min(99, value.BytesCompleted.GetValueOrDefault() * 100d / value.TotalBytes.Value)
+            : value.Total == 0 ? 0 : value.Completed * 100d / value.Total;
+        Status = value.Message + (value.BytesPerSecond is { } speed ? $"\n{value.Completed:N0}/{value.Total:N0} 项 · {Workspace.WorkspaceFile.FormatSize((long)speed)}/s" : "");
+    }
+    public void Complete(ConversionReport report)
+    {
+        Complete(report.Summary, report.Items.Select(item => $"{item.Item.SourceLabel}：{item.Message}"), report.Cancelled,
+            report.Outputs.Select(output => Path.GetDirectoryName(output.FullPath)!));
+    }
+    public void Complete(string summary, IEnumerable<string> details, bool interrupted, IEnumerable<string>? outputDirectories = null)
+    {
+        if (!IsRunning) return;
+        if (!interrupted) Progress = 100;
+        Status = summary;
+        foreach (var detail in details) Details.Add(detail);
+        IsRunning = false;
+        Finished?.Invoke(this, outputDirectories ?? []);
+    }
+    public void Fail(string message) => Complete(message, [message], true);
+}

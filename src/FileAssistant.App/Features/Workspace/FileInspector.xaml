@@ -1,0 +1,89 @@
+﻿<UserControl
+    x:Class="FileAssistant.App.Features.Workspace.FileInspector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:FileAssistant.App.Features.Workspace"
+    xmlns:controls="using:FileAssistant.App.Controls"
+    xmlns:preview="using:FileAssistant.App.Features.Preview">
+    <Grid>
+        <Pivot x:Name="InspectorTabs" Margin="4,2" controls:WorkspaceLocalization.Name="预览与操作">
+            <Pivot.Resources>
+                <x:Double x:Key="PivotHeaderItemFontSize">14</x:Double>
+            </Pivot.Resources>
+            <PivotItem x:Name="DetailsTab" controls:WorkspaceLocalization.Header="文件信息" Margin="14,6,14,14">
+                <ScrollViewer x:Name="DetailsContent" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="14">
+                        <!-- Calm Unselected Hint (No Giant Empty Placeholder Box) -->
+                        <Border Style="{StaticResource WorkspaceBentoCardStyle}" Padding="16,22" Visibility="{x:Bind ViewModel.ShowSelectionHint, Mode=OneWay}">
+                            <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                <Border Width="38" Height="38" CornerRadius="19" Background="{ThemeResource WorkspaceSubtleBrush}" HorizontalAlignment="Center">
+                                    <FontIcon Glyph="&#xE8A5;" FontSize="17" Foreground="{ThemeResource WorkspaceSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock controls:WorkspaceLocalization.Text="选择文件查看预览与详情" FontSize="13.5" FontWeight="SemiBold" TextAlignment="Center" />
+                                <TextBlock controls:WorkspaceLocalization.Text="单击任意文件查看实时缩略图、文本首屏及完整路径；勾选多项可汇总体积与格式分布。" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Multi-Select Batch Summary Card -->
+                        <Border Style="{StaticResource WorkspaceBentoCardStyle}" Visibility="{x:Bind ViewModel.HasMultipleSelection, Mode=OneWay}">
+                            <StackPanel Spacing="8">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBlock FontSize="14" FontWeight="SemiBold"><Run controls:WorkspaceLocalization.Text="已勾选 " /><Run Text="{x:Bind ViewModel.SelectionCount, Mode=OneWay}" /><Run controls:WorkspaceLocalization.Text=" 项" /></TextBlock>
+                                    <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SelectedTotalSizeLabel, Mode=OneWay}" FontSize="13" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" />
+                                </Grid>
+                                <TextBlock Text="{x:Bind ViewModel.MultiSelectionBreakdown, Mode=OneWay}" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                <Button controls:WorkspaceLocalization.Content="复制所选项完整路径" HorizontalAlignment="Stretch" FontSize="12" Padding="10,5" Click="CopySelectedPaths_Click" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Single / Active File Preview & Metadata -->
+                        <StackPanel Spacing="12" Visibility="{x:Bind ViewModel.HasSelection, Mode=OneWay}">
+                            <preview:FilePreviewView File="{x:Bind ViewModel.PreviewFile, Mode=OneWay}" Glyph="{x:Bind ViewModel.PreviewGlyph, Mode=OneWay}" PreviewHeight="188" />
+
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{x:Bind ViewModel.PreviewName, Mode=OneWay}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                                <TextBlock controls:WorkspaceLocalization.Text="{x:Bind ViewModel.PreviewStatus, Mode=OneWay}" Visibility="{x:Bind ViewModel.HasPreviewStatus, Mode=OneWay}" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                            </StackPanel>
+
+                            <Grid ColumnSpacing="6" Visibility="{x:Bind ViewModel.HasSingleSelection, Mode=OneWay}">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <Button controls:WorkspaceLocalization.Content="打开" HorizontalAlignment="Stretch" FontSize="12" Padding="8,5" Click="OpenPreview_Click" />
+                                <Button Grid.Column="1" controls:WorkspaceLocalization.Content="所在文件夹" HorizontalAlignment="Stretch" FontSize="12" Padding="8,5" Click="RevealPreview_Click" />
+                                <Button Grid.Column="2" controls:WorkspaceLocalization.Tip="复制路径" controls:WorkspaceLocalization.Name="复制完整路径" Padding="8,5" Click="CopySelectedPaths_Click">
+                                    <FontIcon Glyph="&#xE8C8;" FontSize="13" />
+                                </Button>
+                            </Grid>
+
+                            <Border Style="{StaticResource WorkspaceBentoCardStyle}">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnSpacing="12" RowSpacing="8">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="60" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                                        <TextBlock controls:WorkspaceLocalization.Text="类型" Style="{StaticResource WorkspaceCaptionStyle}" />
+                                        <TextBlock Grid.Column="1" controls:WorkspaceLocalization.Text="{x:Bind ViewModel.PreviewType, Mode=OneWay}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Row="1" controls:WorkspaceLocalization.Text="大小" Style="{StaticResource WorkspaceCaptionStyle}" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind ViewModel.PreviewSize, Mode=OneWay}" FontSize="12" Typography.NumeralAlignment="Tabular" />
+                                        <TextBlock Grid.Row="2" controls:WorkspaceLocalization.Text="修改时间" Style="{StaticResource WorkspaceCaptionStyle}" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Bind ViewModel.PreviewDate, Mode=OneWay}" FontSize="12" Typography.NumeralAlignment="Tabular" TextWrapping="Wrap" />
+                                    </Grid>
+                                    <Border Height="1" Background="{ThemeResource WorkspaceBorderBrush}" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock controls:WorkspaceLocalization.Text="完整路径" Style="{StaticResource WorkspaceCaptionStyle}" />
+                                        <TextBlock Text="{x:Bind ViewModel.PreviewPath, Mode=OneWay}" FontSize="11.5" TextWrapping="Wrap" IsTextSelectionEnabled="True" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </PivotItem>
+            <PivotItem x:Name="ParametersTab" controls:WorkspaceLocalization.Header="操作参数" Margin="14,6,14,14">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ContentPresenter x:Name="CustomParameters" Visibility="Collapsed" />
+                </ScrollViewer>
+            </PivotItem>
+        </Pivot>
+        <ContentPresenter x:Name="SingleFilePresenter" Margin="14,12" Visibility="Collapsed" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+    </Grid>
+</UserControl>

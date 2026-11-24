@@ -1,0 +1,23 @@
+﻿using Microsoft.UI.Xaml.Controls;
+using FileAssistant.App.Features.FileInput;
+
+namespace FileAssistant.App.Features.Convert;
+
+public sealed partial class ConversionView : UserControl
+{
+    public ConversionViewModel ViewModel => App.Conversion;
+    public event EventHandler? SearchRequested;
+    public event EventHandler<FileInputTransferEventArgs>? FilesForCopyRequested;
+    public event EventHandler<FileInputTransferEventArgs>? FilesForConversionRequested;
+    public event EventHandler<FileInputTransferEventArgs>? FilesForNamingRequested;
+    public ConversionView()
+    {
+        InitializeComponent();
+    }
+    public void FocusQuery() => InputView.FocusQuery();
+    public void SetActive(bool active) => OptionsPanel.SetPreviewActive(active);
+    private void Input_SearchRequested(object? sender, EventArgs e) => SearchRequested?.Invoke(this,e);
+    private void Input_FilesForCopyRequested(object? sender, FileInputTransferEventArgs e) => FilesForCopyRequested?.Invoke(this, e);
+    private void Input_FilesForConversionRequested(object? sender, FileInputTransferEventArgs e) => FilesForConversionRequested?.Invoke(this, e);
+    private void Input_FilesForNamingRequested(object? sender, FileInputTransferEventArgs e) => FilesForNamingRequested?.Invoke(this, e);
+}

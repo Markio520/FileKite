@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <NoWarn>$(NoWarn);CS0618;SYSLIB0050;SYSLIB0057</NoWarn>
+    <BcuRoot>$(MSBuildProjectDirectory)/../../artifacts/dependencies/bcu/6.3/source/Bulk-Crap-Uninstaller-2e53fc13be5481029c9f7b7c2597becd1f3394fa/source</BcuRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Management" />
+    <PackageReference Include="TaskScheduler" />
+  </ItemGroup>
+  <!-- Build the Apache-2.0 core from pinned source. ObjectListView and the BCU application UI are excluded. -->
+  <Target Name="RestoreBcuCore" BeforeTargets="PrepareForBuild">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)/../../scripts/restore-bcu.ps1&quot;" />
+    <ItemGroup>
+      <!-- These progress and splash windows are only used by the upstream BCU desktop GUI. -->
+      <Compile Include="$(BcuRoot)/KlocTools/**/*.cs" Exclude="$(BcuRoot)/KlocTools/Sorters/ColumnSorter.cs;$(BcuRoot)/KlocTools/Forms/LoadingDialog*.cs;$(BcuRoot)/KlocTools/Forms/*SplashScreen*.cs" />
+      <Compile Include="$(BcuRoot)/UninstallTools/**/*.cs" Exclude="$(BcuRoot)/UninstallTools/Controls/**;$(BcuRoot)/UninstallTools/Dialogs/**;$(BcuRoot)/UninstallTools/Factory/InfoAdders/FastSizeGenerator.cs" />
+      <Compile Include="$(BcuRoot)/HelperTools/*.cs" />
+      <_KlocResource Include="$(BcuRoot)/KlocTools/**/*.resx" Exclude="$(BcuRoot)/KlocTools/**/*.*.resx;$(BcuRoot)/KlocTools/Forms/LoadingDialog.resx;$(BcuRoot)/KlocTools/Forms/OverlaySplashScreen.resx" />
+      <EmbeddedResource Include="@(_KlocResource)">
+        <Link>Klocman/%(_KlocResource.RecursiveDir)%(_KlocResource.Filename)%(_KlocResource.Extension)</Link>
+        <ManifestResourceName>$([System.String]::Copy('Klocman.%(_KlocResource.RecursiveDir)%(_KlocResource.Filename)').Replace('\','.').Replace('/','.'))</ManifestResourceName>
+        <LogicalName>$([System.String]::Copy('Klocman.%(_KlocResource.RecursiveDir)%(_KlocResource.Filename).resources').Replace('\','.').Replace('/','.'))</LogicalName>
+      </EmbeddedResource>
+      <_UninstallResource Include="$(BcuRoot)/UninstallTools/Properties/*.resx" Exclude="$(BcuRoot)/UninstallTools/Properties/*.*.resx" />
+      <EmbeddedResource Include="@(_UninstallResource)">
+        <Link>UninstallTools/Properties/%(_UninstallResource.Filename)%(_UninstallResource.Extension)</Link>
+        <ManifestResourceName>UninstallTools.Properties.%(_UninstallResource.Filename)</ManifestResourceName>
+        <LogicalName>UninstallTools.Properties.%(_UninstallResource.Filename).resources</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
+</Project>

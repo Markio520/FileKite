@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="FileAssistant.App.Features.Workspace.WorkspaceTaskPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:FileAssistant.App.Controls"
+    xmlns:tasks="using:FileAssistant.App.Features.Tasks">
+    <Grid Background="{ThemeResource WorkspaceSurfaceBrush}" CornerRadius="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid ColumnSpacing="12" Padding="16,12" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,0,0,1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="2" VerticalAlignment="Center">
+                <TextBlock controls:WorkspaceLocalization.Text="任务队列" FontSize="15" FontWeight="SemiBold" />
+                <TextBlock controls:WorkspaceLocalization.Text="{x:Bind Jobs.Summary, Mode=OneWay}" Visibility="{x:Bind Jobs.HasItems, Mode=OneWay}" Style="{StaticResource WorkspaceCaptionStyle}" TextWrapping="Wrap" />
+            </StackPanel>
+            <Button Grid.Column="1" Style="{StaticResource WorkspaceIconButtonStyle}" Click="Close_Click" controls:WorkspaceLocalization.Name="关闭任务队列" controls:WorkspaceLocalization.Tip="关闭任务队列">
+                <FontIcon Glyph="&#xE711;" FontSize="13" />
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="124" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Spacing="3" Padding="8,12" Background="{ThemeResource WorkspacePaneBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,0,1,0">
+                <ToggleButton x:Name="AllTasks" Tag="all" controls:WorkspaceLocalization.Content="全部任务" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Filter_Click" IsChecked="True" />
+                <ToggleButton x:Name="RunningTasks" Tag="running" controls:WorkspaceLocalization.Content="进行中" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Filter_Click" IsChecked="False" />
+                <ToggleButton x:Name="FinishedTasks" Tag="finished" controls:WorkspaceLocalization.Content="已结束" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Filter_Click" IsChecked="False" />
+            </StackPanel>
+
+            <Grid Grid.Column="1" Padding="14,12">
+                <Grid Visibility="{x:Bind Jobs.IsEmpty, Mode=OneWay}">
+                    <StackPanel Spacing="10" Padding="8,20" HorizontalAlignment="Center" Visibility="{x:Bind ViewModel.ShowEmptyQueue, Mode=OneWay}">
+                        <Grid Width="46" Height="46" HorizontalAlignment="Center">
+                            <Border Width="38" Height="38" CornerRadius="10" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Border.RenderTransform><RotateTransform Angle="-8" CenterX="19" CenterY="19" /></Border.RenderTransform>
+                            </Border>
+                            <Border Width="38" Height="38" CornerRadius="10" Background="{ThemeResource WorkspaceCardBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE9D9;" FontSize="15" Foreground="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                        <TextBlock controls:WorkspaceLocalization.Text="还没有进行中的任务" Style="{StaticResource WorkspaceSectionStyle}" HorizontalAlignment="Center" />
+                        <TextBlock controls:WorkspaceLocalization.Text="开始转换、改名、复制或清理后，可在这里实时查看进度和处理明细。" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="300" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                    </StackPanel>
+                    <Border Style="{StaticResource WorkspaceBentoCardStyle}" Visibility="{x:Bind ViewModel.IsTaskExample, Mode=OneWay}">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Spacing="8">
+                                <Grid><TextBlock controls:WorkspaceLocalization.Text="复制到交付目录" FontWeight="SemiBold" /><TextBlock Text="62%" HorizontalAlignment="Right" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" /></Grid>
+                                <ProgressBar Value="62" Maximum="100" Foreground="{ThemeResource WorkspaceAccentBrush}" controls:WorkspaceLocalization.Name="示例进度 62%，未执行文件操作" />
+                                <TextBlock controls:WorkspaceLocalization.Text="进度示例 · 5 / 8 项 · 未执行文件操作" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="1" controls:WorkspaceLocalization.Content="关闭示例" VerticalAlignment="Center" Command="{x:Bind ViewModel.CloseTaskExampleCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <ListView x:Name="QueueList" Visibility="{x:Bind Jobs.HasItems, Mode=OneWay}" MaxHeight="360" SelectionMode="None" HorizontalContentAlignment="Stretch">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0,0,0,8" />
+                            <Setter Property="MinHeight" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="tasks:ProcessingJob">
+                            <Border Style="{StaticResource WorkspaceBentoCardStyle}">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="3">
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="13" />
+                                            <TextBlock controls:WorkspaceLocalization.Text="{x:Bind Status, Mode=OneWay}" TextWrapping="Wrap" Style="{StaticResource WorkspaceCaptionStyle}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" controls:WorkspaceLocalization.Content="取消" Command="{x:Bind CancelCommand}" Visibility="{x:Bind IsRunning, Mode=OneWay}" VerticalAlignment="Center" FontSize="12" Padding="10,4" />
+                                    </Grid>
+                                    <ProgressBar Value="{x:Bind Progress, Mode=OneWay}" Maximum="100" Foreground="{ThemeResource WorkspaceAccentBrush}" Visibility="{x:Bind IsRunning, Mode=OneWay}" />
+                                    <Button controls:WorkspaceLocalization.Content="处理明细" HorizontalAlignment="Left" FontSize="12" Padding="10,4">
+                                        <Button.Flyout>
+                                            <Flyout Placement="Bottom">
+                                                <ListView ItemsSource="{x:Bind Details}" MaxHeight="300" SelectionMode="None" Width="420">
+                                                    <ListView.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding}" TextWrapping="Wrap" IsTextSelectionEnabled="True" FontSize="12" />
+                                                        </DataTemplate>
+                                                    </ListView.ItemTemplate>
+                                                </ListView>
+                                            </Flyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <TextBlock x:Name="EmptyFilter" controls:WorkspaceLocalization.Text="此分类暂无任务" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource WorkspaceCaptionStyle}" />
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

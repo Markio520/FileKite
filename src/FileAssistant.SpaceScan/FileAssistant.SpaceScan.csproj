@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <SelfContained Condition="'$(SelfContained)' == ''">true</SelfContained>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x86'">win-x86</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../FileAssistant.Infrastructure/FileSystem/DirectoryScanEntries.cs" Link="Scan/DirectoryScanEntries.cs" />
+    <ProjectReference Include="../FileAssistant.Core/FileAssistant.Core.csproj" />
+    <Compile Include="../FileAssistant.Infrastructure/FileSystem/Ntfs/Ntfs*.cs" Link="Scan/%(Filename)%(Extension)" />
+    <Compile Include="../FileAssistant.Infrastructure/FileSystem/Ntfs/SpaceEntryBlocks.cs" Link="Scan/SpaceEntryBlocks.cs" />
+    <Compile Include="../FileAssistant.Infrastructure/FileSystem/Ntfs/SpaceScanWire.cs" Link="Scan/SpaceScanWire.cs" />
+  </ItemGroup>
+</Project>

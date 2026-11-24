@@ -1,0 +1,28 @@
+param([switch]$Office, [switch]$Offline)
+$ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'initialize-dotnet.ps1')
+Push-Location (Split-Path -Parent $PSScriptRoot)
+try {
+    if ($Offline -and [Net.NetworkInformation.NetworkInterface]::GetIsNetworkAvailable()) {
+        throw 'Offline acceptance was NOT run: a network interface is still connected. Disconnect networking before using -Offline. Prepare engines and build tests first.'
+    }
+    if (-not $Offline) { & (Join-Path $PSScriptRoot 'restore-processing-engines.ps1') }
+    if (-not $Offline -and $Office) { & (Join-Path $PSScriptRoot 'restore-office-engine.ps1') -Extract }
+    $taskFilter = if ($Office) { 'Category=Office' } else { 'Category!=Office' }
+    $taskProjects = if ($Office) {
+        @('tests/FileAssistant.Infrastructure.Tests/FileAssistant.Infrastructure.Tests.csproj')
+    } else {
+        @(
+            'tests/FileAssistant.Core.Tests/FileAssistant.Core.Tests.csproj',
+            'tests/FileAssistant.Infrastructure.Tests/FileAssistant.Infrastructure.Tests.csproj',
+            'tests/FileAssistant.Indexing.Tests/FileAssistant.Indexing.Tests.csproj',
+            'tests/FileAssistant.App.Tests/FileAssistant.App.Tests.csproj'
+        )
+    }
+    foreach ($taskProject in $taskProjects) {
+        $taskArguments = @('test', $taskProject, '--filter', $taskFilter, '--verbosity', 'minimal')
+        if ($Offline) { $taskArguments += @('--no-build', '--no-restore') }
+        & $taskDotnet @taskArguments
+        if ($LASTEXITCODE -ne 0) { throw "Tests failed: $taskProject" }
+    }
+} finally { Pop-Location }

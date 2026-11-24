@@ -1,0 +1,107 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Product>纸鸢 FileKite</Product>
+    <AssemblyTitle>纸鸢 FileKite</AssemblyTitle>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>FileAssistant.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('Assets\AppIcon.ico')">Assets\AppIcon.ico</ApplicationIcon>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x86'">win-x86</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <EnableMsixTooling>true</EnableMsixTooling>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(SharedIndexTrial)' == 'true'">
+    <AssemblyName>FileAssistant.IndexTrial</AssemblyName>
+    <AssemblyTitle>纸鸢 FileKite · 自建索引测试版</AssemblyTitle>
+    <NuGetLockFilePath>packages.index-trial.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileAssistant.Indexing.Windows\FileAssistant.Indexing.Windows.csproj" />
+    <None Include="..\..\third-party\index-lab\*.txt" Link="Licenses\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\*.png;Assets\AppIcon.ico;Assets\AppIcons\*.ico;Assets\AppIcons\*.png"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+    <Content Include="Assets\CreationTemplates\blank.*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third-party\licenses\**\*" Exclude="..\..\third-party\licenses\Everything-*.txt" Link="Licenses\$([System.String]::Copy('%(RecursiveDir)%(Filename)').Replace('.', '_').Replace('\', '_'))%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\LICENSE" Link="Licenses\FileKite-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\NOTICE" Link="Licenses\FileKite-NOTICE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third-party\SOURCE-ACCESS.md" Link="Licenses\SOURCE-ACCESS.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third-party\BCUninstaller-adaptation.md" Link="Licenses\BCUninstaller-adaptation.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\third-party\ffmpeg-build-configuration.txt" Link="Licenses\ffmpeg-build-configuration.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\engines\manifest.json" Link="Engines\manifest.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.Windows.SDK.BuildTools.WinApp adds first-class support for
+    `dotnet run` on packaged WinUI apps: it hooks the .NET CLI Run target to
+    register a debug identity via the winapp CLI and launch the app with
+    package identity (AUMID).
+    Set <EnableWinAppRunSupport>false</EnableWinAppRunSupport> in a
+    <PropertyGroup> above to opt out.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileAssistant.Core\FileAssistant.Core.csproj" />
+    <ProjectReference Include="..\FileAssistant.Infrastructure\FileAssistant.Infrastructure.csproj" />
+    <ProjectReference Include="..\FileAssistant.SpaceScan\FileAssistant.SpaceScan.csproj" />
+    <ProjectReference Include="..\FileAssistant.CleanupHost\FileAssistant.CleanupHost.csproj" />
+  </ItemGroup>
+
+  <!--
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <!-- Publish Properties -->
+  <PropertyGroup>
+    <ProcessingEngineCache>$(MSBuildProjectDirectory)\..\..\artifacts\dependencies\ffmpeg\8.1.3-9-g29e619e767\x64\bundle</ProcessingEngineCache>
+  </PropertyGroup>
+  <Target Name="RestoreProcessingEngines" BeforeTargets="PrepareForBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\scripts\restore-processing-engines.ps1&quot; -Architecture $(Platform)" />
+    <ItemGroup>
+      <_ProcessingEngineFile Include="$(ProcessingEngineCache)\**\*"
+        Exclude="$(ProcessingEngineCache)\bin\ffplay.exe;$(ProcessingEngineCache)\include\**;$(ProcessingEngineCache)\lib\**" />
+      <Content Include="@(_ProcessingEngineFile)"
+        Link="Engines\ffmpeg\%(_ProcessingEngineFile.RecursiveDir)%(_ProcessingEngineFile.Filename)%(_ProcessingEngineFile.Extension)" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    </ItemGroup>
+  </Target>
+  <PropertyGroup>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+    <!-- BCU discovers its scanners and resource accessors through reflection. Preserve the helper's dependency graph. -->
+    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
+  </PropertyGroup>
+</Project>

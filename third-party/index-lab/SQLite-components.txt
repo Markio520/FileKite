@@ -1,0 +1,14 @@
+Microsoft.Data.Sqlite and Microsoft.Data.Sqlite.Core 10.0.15
+Copyright Microsoft Corporation. All rights reserved.
+MIT license. See Microsoft.Data.Sqlite-10.0.15-LICENSE.txt.
+https://github.com/dotnet/efcore
+
+SQLitePCLRaw.core, SQLitePCLRaw.provider.e_sqlite3, SQLitePCLRaw.bundle_e_sqlite3
+and SQLitePCLRaw.lib.e_sqlite3 2.1.13
+Copyright 2014-2024 SourceGear, LLC
+Apache License, Version 2.0. See Apache-2.0.txt and SQLitePCLRaw-NOTICE.txt.
+https://github.com/ericsink/SQLitePCL.raw
+
+SQLite
+The SQLite authors dedicate the SQLite implementation to the public domain.
+https://www.sqlite.org/copyright.html

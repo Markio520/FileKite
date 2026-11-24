@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="FileAssistant.App.Features.Workspace.WorkspacePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:input="using:FileAssistant.App.Features.FileInput"
+    xmlns:search="using:FileAssistant.App.Features.Search"
+    xmlns:controls="using:FileAssistant.App.Controls"
+    xmlns:convert="using:FileAssistant.App.Features.Convert"
+    xmlns:outputs="using:FileAssistant.App.Features.Outputs"
+    xmlns:organize="using:FileAssistant.App.Features.Organize"
+    xmlns:naming="using:FileAssistant.App.Features.CreateOrRename"
+    xmlns:workspace="using:FileAssistant.App.Features.Workspace"
+    Background="{ThemeResource WorkspaceBackgroundBrush}">
+    <Page.Resources>
+        <Flyout x:Name="TaskQueueFlyout" Closed="TaskQueueFlyout_Closed">
+            <ScrollViewer x:Name="TaskQueueScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <workspace:WorkspaceTaskPanel x:Name="TaskQueuePanel" ViewModel="{x:Bind ViewModel}" />
+            </ScrollViewer>
+        </Flyout>
+
+        <Style x:Key="MainRailNavItemStyle" TargetType="ToggleButton">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+            <Setter Property="FocusVisualMargin" Value="-1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="NavRoot" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Checked"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceNavigationSelectedBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="NavContent.FontWeight" Value="SemiBold" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="NavContent.FontWeight" Value="SemiBold" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="NavContent.FontWeight" Value="SemiBold" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="NavRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="NavContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="LeftNavigationColumn" Width="187" />
+            <ColumnDefinition x:Name="LeftRailHandleColumn" Width="10" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Native 48 DIP Tall Modern TitleBar (Exact Horizontal Centerline Alignment with System Caption Buttons) -->
+        <TitleBar x:Name="WorkspaceTitleBar" Grid.ColumnSpan="3" Height="48" Foreground="{ThemeResource WorkspaceTextBrush}">
+            <TitleBar.Resources>
+                <x:Double x:Key="TitleBarCompactHeight">48</x:Double>
+                <x:Double x:Key="TitleBarExpandedHeight">48</x:Double>
+                <x:Double x:Key="TitleBarLeftPaddingWidth">4</x:Double>
+                <x:Double x:Key="TitleBarLeftHeaderPaddingWidth">0</x:Double>
+                <x:Double x:Key="TitleBarHeaderNegativeInsetPaddingWidth">0</x:Double>
+                <x:Double x:Key="TitleBarMinDragRegionWidth">36</x:Double>
+
+                <Style x:Key="TitleBarIntegratedTabStyle" TargetType="ToggleButton">
+                    <Setter Property="Height" Value="30" />
+                    <Setter Property="MinHeight" Value="30" />
+                    <Setter Property="Padding" Value="9,0" />
+                    <Setter Property="FontSize" Value="12.5" />
+                    <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="UseSystemFocusVisuals" Value="True" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border x:Name="TabRoot" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup x:Name="CommonStates">
+                                            <VisualState x:Name="Normal" />
+                                            <VisualState x:Name="PointerOver">
+                                                <VisualState.Setters>
+                                                    <Setter Target="TabRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+                                                    <Setter Target="TabPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Pressed">
+                                                <VisualState.Setters>
+                                                    <Setter Target="TabRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                                    <Setter Target="TabPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Checked">
+                                                <VisualState.Setters>
+                                                    <Setter Target="TabRoot.Background" Value="{ThemeResource WorkspaceAccentSoftBrush}" />
+                                                    <Setter Target="TabPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                                    <Setter Target="TabPresenter.FontWeight" Value="SemiBold" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="CheckedPointerOver">
+                                                <VisualState.Setters>
+                                                    <Setter Target="TabRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                                    <Setter Target="TabPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                                    <Setter Target="TabPresenter.FontWeight" Value="SemiBold" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="CheckedPressed">
+                                                <VisualState.Setters>
+                                                    <Setter Target="TabRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                                    <Setter Target="TabPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                                    <Setter Target="TabPresenter.FontWeight" Value="SemiBold" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Disabled">
+                                                <VisualState.Setters>
+                                                    <Setter Target="TabRoot.Opacity" Value="0.45" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+                                    <ContentPresenter x:Name="TabPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TitleBar.Resources>
+
+            <!-- Left Brand Lockup + Edge/Feishu Single-Row Integrated Navigation Pills -->
+            <TitleBar.LeftHeader>
+                <StackPanel Orientation="Horizontal" Spacing="9" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Spacing="0" VerticalAlignment="Center">
+                        <Image x:Name="TitleBarAppIcon" Width="24" Height="24" VerticalAlignment="Center" />
+                        <TextBlock x:Name="TitleBarCompactBrand" controls:WorkspaceLocalization.Text="纸鸢" Visibility="Collapsed"
+                            FontSize="9" LineHeight="11" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{ThemeResource WorkspaceTextBrush}" />
+                    </StackPanel>
+                    <StackPanel x:Name="TitleBarBrandLockup" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <TextBlock x:Name="TitleBarBrandText" controls:WorkspaceLocalization.Text="纸鸢" FontSize="13" FontWeight="SemiBold"
+                            Foreground="{ThemeResource WorkspaceTextBrush}" VerticalAlignment="Center" />
+                        <TextBlock x:Name="TitleBarBrandSubtitle" Text="FileKite" FontSize="11" Foreground="{ThemeResource WorkspaceSecondaryBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Grid>
+                        <Border x:Name="TopIntegratedNavHost" Visibility="Collapsed" VerticalAlignment="Center" Margin="2,0,0,0">
+                            <Grid>
+                                <StackPanel x:Name="TopMainNavigation" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" controls:WorkspaceLocalization.Name="主要功能">
+                                    <ToggleButton x:Name="TopWorkspaceNav" Tag="workspace" Style="{StaticResource TitleBarIntegratedTabStyle}" Click="Navigation_Click" IsChecked="True" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="文件暂存区" controls:WorkspaceLocalization.Tip="文件暂存区（支持直接拖入文件）">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <FontIcon Glyph="&#xE8F7;" FontSize="13" />
+                                            <TextBlock controls:WorkspaceLocalization.Text="暂存区" />
+                                            <Border x:Name="TopWorkspaceBadge" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="7" Padding="5,1" Visibility="{x:Bind ViewModel.HasAnyReferences, Mode=OneWay}">
+                                                <TextBlock Text="{x:Bind ViewModel.TotalReferenceCount, Mode=OneWay}" FontSize="10.5" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                            </Border>
+                                        </StackPanel>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="TopSearchNav" Tag="search" Style="{StaticResource TitleBarIntegratedTabStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="搜索与筛选" controls:WorkspaceLocalization.Tip="搜索与筛选">
+                                        <StackPanel Orientation="Horizontal" Spacing="5"><FontIcon Glyph="&#xE721;" FontSize="13" /><TextBlock controls:WorkspaceLocalization.Text="搜索" /></StackPanel>
+                                    </ToggleButton>
+
+                                    <Border Width="1" Height="13" Background="{ThemeResource WorkspaceBorderBrush}" Margin="3,0" VerticalAlignment="Center" />
+
+                                    <ToggleButton x:Name="TopConversionNav" Tag="convert" Style="{StaticResource TitleBarIntegratedTabStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="格式转换" controls:WorkspaceLocalization.Tip="格式转换（支持直接拖入文件）">
+                                        <StackPanel Orientation="Horizontal" Spacing="5"><FontIcon Glyph="&#xE8AB;" FontSize="13" /><TextBlock controls:WorkspaceLocalization.Text="格式转换" /></StackPanel>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="TopNamingNav" Tag="naming" Style="{StaticResource TitleBarIntegratedTabStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="批量创建与改名" controls:WorkspaceLocalization.Tip="创建与改名（支持直接拖入待改名文件）">
+                                        <StackPanel Orientation="Horizontal" Spacing="5"><FontIcon Glyph="&#xE70F;" FontSize="13" /><TextBlock controls:WorkspaceLocalization.Text="创建与改名" /></StackPanel>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="TopCopyNav" Tag="organize" Style="{StaticResource TitleBarIntegratedTabStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="复制与整理" controls:WorkspaceLocalization.Tip="复制与整理（支持直接拖入文件）">
+                                        <StackPanel Orientation="Horizontal" Spacing="5"><FontIcon Glyph="&#xE8C8;" FontSize="13" /><TextBlock controls:WorkspaceLocalization.Text="复制整理" /></StackPanel>
+                                    </ToggleButton>
+
+                                    <Border Width="1" Height="13" Background="{ThemeResource WorkspaceBorderBrush}" Margin="3,0" VerticalAlignment="Center" />
+
+                                    <ToggleButton x:Name="TopSpaceNav" Tag="space" Style="{StaticResource TitleBarIntegratedTabStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="空间分析" controls:WorkspaceLocalization.Tip="空间分析">
+                                        <StackPanel Orientation="Horizontal" Spacing="5"><FontIcon Glyph="&#xE9D9;" FontSize="13" /><TextBlock controls:WorkspaceLocalization.Text="空间分析" /></StackPanel>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="TopCleanupNav" Tag="cleanup" Style="{StaticResource TitleBarIntegratedTabStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="卸载与清理" controls:WorkspaceLocalization.Tip="卸载与清理（支持直接拖入待清理文件）">
+                                        <StackPanel Orientation="Horizontal" Spacing="5"><FontIcon Glyph="&#xE74D;" FontSize="13" /><TextBlock controls:WorkspaceLocalization.Text="卸载清理" /></StackPanel>
+                                    </ToggleButton>
+                                </StackPanel>
+                                <Border x:Name="TopSlidingBar" Width="16" Height="2" CornerRadius="1" Background="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Bottom" IsHitTestVisible="False">
+                                    <Border.RenderTransform><TranslateTransform x:Name="TopSlidingTransform" /></Border.RenderTransform>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </TitleBar.LeftHeader>
+
+            <!-- Right Utility Chrome: Perfectly Centered Vertically at Y=24 with System Caption Buttons -->
+            <TitleBar.RightHeader>
+                <StackPanel Orientation="Horizontal" Spacing="3" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <StackPanel x:Name="TopRightQuickPod" Orientation="Horizontal" Spacing="3" Visibility="Collapsed" VerticalAlignment="Center">
+                        <ToggleButton x:Name="TopOutputsNav" Tag="outputs" Style="{StaticResource TitleBarIntegratedTabStyle}" Padding="8,0" Click="Navigation_Click" controls:WorkspaceLocalization.Name="文件输出区" controls:WorkspaceLocalization.Tip="文件输出区">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon Glyph="&#xE8A5;" FontSize="14" />
+                                <Border x:Name="TopOutputsBadge" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="7" Padding="5,1" Visibility="{x:Bind Outputs.HasFiles, Mode=OneWay}">
+                                    <TextBlock Text="{x:Bind Outputs.TotalCount, Mode=OneWay}" FontSize="10.5" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </ToggleButton>
+                        <Button x:Name="TopTasksButton" Style="{StaticResource TitleBarChromeIconStyle}" Width="Auto" MinWidth="30" Padding="7,0" Click="TaskQueue_Click" controls:WorkspaceLocalization.Name="任务队列" controls:WorkspaceLocalization.Tip="{x:Bind Jobs.Summary, Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <ProgressRing Width="14" Height="14" IsIndeterminate="False" Value="{x:Bind Jobs.OverallProgress, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" Foreground="{ThemeResource WorkspaceAccentBrush}" />
+                                <FontIcon x:Name="TopTasksIdleIcon" Glyph="&#xE9D5;" FontSize="14" Visibility="{x:Bind Jobs.IsIdle, Mode=OneWay}" />
+                                <TextBlock Text="{x:Bind Jobs.CompactPercent, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" FontSize="11" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Border Width="1" Height="14" Background="{ThemeResource WorkspaceBorderBrush}" Margin="3,0" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <Button x:Name="NavModeToggleButton" Style="{StaticResource TitleBarChromeIconStyle}" Click="NavModeToggle_Click"
+                        controls:WorkspaceLocalization.Name="切换左侧工作区或单行融合顶栏" controls:WorkspaceLocalization.Tip="切换为单行融合顶栏">
+                        <FontIcon x:Name="NavModeGlyph" Glyph="&#xE8A9;" FontSize="14" />
+                    </Button>
+
+                    <Button x:Name="TitleAppearanceButton" Style="{StaticResource TitleBarChromeIconStyle}" controls:WorkspaceLocalization.Name="切换外观材质" controls:WorkspaceLocalization.Tip="切换外观材质">
+                        <FontIcon x:Name="TitleAppearanceIcon" Glyph="&#xE706;" FontSize="14" />
+                        <Button.Flyout>
+                            <MenuFlyout x:Name="AppearanceMenuFlyout" Placement="BottomEdgeAlignedRight" Opening="AppearanceFlyout_Opening">
+                                <ToggleMenuFlyoutItem x:Name="ThemeLightItem" controls:WorkspaceLocalization.Text="浅色（暖白纸感）" Tag="Light" Click="AppearanceMenu_Click" />
+                                <ToggleMenuFlyoutItem x:Name="ThemeCharcoalItem" controls:WorkspaceLocalization.Text="炭黑云母（深色）" Tag="CharcoalGlass" Click="AppearanceMenu_Click" />
+                                <MenuFlyoutSeparator />
+                                <ToggleMenuFlyoutItem x:Name="ThemeSystemItem" controls:WorkspaceLocalization.Text="跟随系统" Tag="System" Click="AppearanceMenu_Click" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+
+                    <Button x:Name="TitleSettingsButton" Style="{StaticResource TitleBarChromeIconStyle}" Click="Settings_Click" controls:WorkspaceLocalization.Name="设置与引擎管理" controls:WorkspaceLocalization.Tip="设置与引擎管理">
+                        <FontIcon Glyph="&#xE713;" FontSize="14" />
+                    </Button>
+                </StackPanel>
+            </TitleBar.RightHeader>
+        </TitleBar>
+
+        <!-- Default Left Grouped Navigation Rail with Restored "工作区" Header & Continuous Sliding Pill -->
+        <Grid x:Name="LeftNavigationRail" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,5,0" Padding="8,2,8,8" RowSpacing="6">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Restored "工作区" Sidebar Header Row: Left Title, Right Collapse Button -->
+            <Grid x:Name="LeftWorkspaceHeader" Padding="10,2,2,2" ColumnSpacing="6" MinHeight="36">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="LeftWorkspaceHeaderTitle" controls:WorkspaceLocalization.Text="工作区" Style="{StaticResource WorkspacePaneTitleStyle}" VerticalAlignment="Center" />
+                <Button x:Name="RailCollapseButton" Grid.Column="1" Style="{StaticResource WorkspaceIconButtonStyle}"
+                    Click="RailCollapse_Click" controls:WorkspaceLocalization.Name="收起或展开工作区侧栏" controls:WorkspaceLocalization.Tip="收起工作区侧栏"
+                    Content="" ContentTemplate="{StaticResource WorkspaceLeftPaneIconTemplate}" />
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+                    <StackPanel x:Name="LeftMainNavigation" Spacing="2" controls:WorkspaceLocalization.Name="主要功能分组导航">
+                        <TextBlock x:Name="LeftGroupCollect" controls:WorkspaceLocalization.Text="收集与检索" Style="{StaticResource WorkspaceNavGroupHeaderStyle}" Margin="10,4,8,3" />
+                        <ToggleButton x:Name="LeftWorkspaceNav" Tag="workspace" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" IsChecked="True" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="文件暂存区" controls:WorkspaceLocalization.Tip="文件暂存区（支持直接拖入文件）">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE8F7;" FontSize="15" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="暂存区" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <Border x:Name="LeftWorkspaceBadge" Grid.Column="2" Tag="RailLabel" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="8" Padding="6,1" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasAnyReferences, Mode=OneWay}">
+                                    <TextBlock Text="{x:Bind ViewModel.TotalReferenceCount, Mode=OneWay}" FontSize="11" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                </Border>
+                            </Grid>
+                        </ToggleButton>
+                        <ToggleButton x:Name="LeftSearchNav" Tag="search" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="搜索与筛选" controls:WorkspaceLocalization.Tip="搜索与筛选">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE721;" FontSize="15" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="搜索筛选" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </ToggleButton>
+
+                        <TextBlock x:Name="LeftGroupProcess" controls:WorkspaceLocalization.Text="批量加工" Style="{StaticResource WorkspaceNavGroupHeaderStyle}" />
+                        <ToggleButton x:Name="LeftConversionNav" Tag="convert" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="格式转换" controls:WorkspaceLocalization.Tip="格式转换（支持直接拖入文件）">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE8AB;" FontSize="15" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="格式转换" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </ToggleButton>
+                        <ToggleButton x:Name="LeftNamingNav" Tag="naming" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="批量创建与改名" controls:WorkspaceLocalization.Tip="创建与改名（支持直接拖入待改名文件）">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE70F;" FontSize="15" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="创建与改名" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </ToggleButton>
+                        <ToggleButton x:Name="LeftCopyNav" Tag="organize" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="复制与整理" controls:WorkspaceLocalization.Tip="复制与整理（支持直接拖入文件）">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE8C8;" FontSize="15" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="复制与整理" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </ToggleButton>
+
+                        <TextBlock x:Name="LeftGroupSystem" controls:WorkspaceLocalization.Text="空间与系统" Style="{StaticResource WorkspaceNavGroupHeaderStyle}" />
+                        <ToggleButton x:Name="LeftSpaceNav" Tag="space" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="空间分析" controls:WorkspaceLocalization.Tip="空间分析">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE9D9;" FontSize="15" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="空间分析" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </ToggleButton>
+                        <ToggleButton x:Name="LeftCleanupNav" Tag="cleanup" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="卸载与清理" controls:WorkspaceLocalization.Tip="卸载与清理（支持直接拖入待清理文件）">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <FontIcon Glyph="&#xE74D;" FontSize="15" HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="卸载与清理" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </ToggleButton>
+                    </StackPanel>
+
+                    <Border x:Name="LeftSlidingPill" Width="3" Height="16" CornerRadius="1.5" Background="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
+                        <Border.RenderTransform><TranslateTransform x:Name="LeftSlidingTransform" /></Border.RenderTransform>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- Bottom Pinned Pod: Outputs + Live Mini Task Ring (with Completion Checkmark Morph) -->
+            <StackPanel Grid.Row="2" Spacing="5" Padding="0,6,0,0" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,1,0,0">
+                <ToggleButton x:Name="LeftOutputsNav" Tag="outputs" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="文件输出区" controls:WorkspaceLocalization.Tip="文件输出区">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE8A5;" FontSize="15" HorizontalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="文件输出区" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <Border x:Name="LeftOutputsBadge" Grid.Column="2" Tag="RailLabel" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="8" Padding="6,1" VerticalAlignment="Center" Visibility="{x:Bind Outputs.HasFiles, Mode=OneWay}">
+                            <TextBlock Text="{x:Bind Outputs.TotalCount, Mode=OneWay}" FontSize="11" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                        </Border>
+                    </Grid>
+                </ToggleButton>
+
+                <Button x:Name="LeftTasksButton" Click="TaskQueue_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="9,6" MinHeight="34" CornerRadius="7" Background="{ThemeResource WorkspaceCardBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" controls:WorkspaceLocalization.Name="任务队列" controls:WorkspaceLocalization.Tip="{x:Bind Jobs.Summary, Mode=OneWay}">
+                    <Grid ColumnSpacing="9">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <ProgressRing Width="16" Height="16" IsIndeterminate="False" Value="{x:Bind Jobs.OverallProgress, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" Foreground="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <FontIcon x:Name="LeftTasksIdleIcon" Glyph="&#xE9D5;" FontSize="14" Visibility="{x:Bind Jobs.IsIdle, Mode=OneWay}" Foreground="{ThemeResource WorkspaceSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock x:Name="LeftTasksLabel" Grid.Column="1" controls:WorkspaceLocalization.Text="{x:Bind Jobs.CompactLabel, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <TextBlock x:Name="LeftTasksPercent" Grid.Column="2" Text="{x:Bind Jobs.CompactPercent, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" FontSize="11" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Elevated Inset Rounded Workbench Sheet with 1px Specular Top Rim & ThemeShadow -->
+        <Border x:Name="WorkbenchSheet" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Style="{StaticResource WorkspaceInsetSheetStyle}" Margin="5,0,8,8" Translation="0,0,10">
+            <Border.Shadow><ThemeShadow /></Border.Shadow>
+            <Grid>
+                <input:FileInputView x:Name="StagingPanel" ViewModel="{x:Bind ViewModel}" SearchRequested="Input_SearchRequested" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForConversionRequested="Input_FilesForConversionRequested" FilesForNamingRequested="Input_FilesForNamingRequested" />
+                <organize:CopyView x:Name="CopyPanel" x:Load="False" Visibility="Collapsed" SearchRequested="Input_SearchRequested" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForConversionRequested="Input_FilesForConversionRequested" FilesForNamingRequested="Input_FilesForNamingRequested" />
+                <naming:NamingView x:Name="NamingPanel" x:Load="False" Visibility="Collapsed" SearchRequested="Input_SearchRequested" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForConversionRequested="Input_FilesForConversionRequested" />
+                <search:SearchView x:Name="SearchPanel" x:Load="False" Visibility="Collapsed" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForConversionRequested="Input_FilesForConversionRequested" FilesForNamingRequested="Input_FilesForNamingRequested" />
+                <convert:ConversionView x:Name="ConversionPanel" x:Load="False" Visibility="Collapsed" SearchRequested="Input_SearchRequested" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForConversionRequested="Input_FilesForConversionRequested" FilesForNamingRequested="Input_FilesForNamingRequested" />
+                <outputs:OutputsView x:Name="OutputsPanel" x:Load="False" Visibility="Collapsed" FilesForConversionRequested="Input_FilesForConversionRequested" FilesForCopyRequested="Input_FilesForCopyRequested" FilesForNamingRequested="Input_FilesForNamingRequested" />
+                <ContentPresenter x:Name="SpaceHost" Visibility="Collapsed" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                <ContentPresenter x:Name="CleanupHost" Visibility="Collapsed" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+                <Border Height="1" VerticalAlignment="Top" Margin="12,0" Background="{ThemeResource WorkspaceSpecularRimBrush}" IsHitTestVisible="False" />
+            </Grid>
+        </Border>
+
+        <controls:ResizeHandle x:Name="LeftRailResizeHandle" Grid.Row="1" Grid.Column="1" Canvas.ZIndex="20" Margin="0,10,0,18"
+            ResizeRequested="LeftRail_ResizeRequested" ResetRequested="LeftRail_ResetRequested"
+            controls:WorkspaceLocalization.Name="调整工作区侧栏宽度" />
+    </Grid>
+</Page>
