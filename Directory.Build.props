@@ -9,6 +9,12 @@
   </PropertyGroup>
   <!-- Packaging modes generate different resource indexes and must not share intermediates. -->
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'FileAssistant.App'">
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <Authors>Markio</Authors>
+    <Company>Markio</Company>
+    <Copyright>Copyright © Markio</Copyright>
     <BaseOutputPath>bin/shared-index/packaged/</BaseOutputPath>
     <BaseIntermediateOutputPath>obj/shared-index/packaged/</BaseIntermediateOutputPath>
   </PropertyGroup>

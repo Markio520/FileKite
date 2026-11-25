@@ -18,9 +18,16 @@ public sealed record StorageUsage(long EnginesBytes, long PreviewBytes, long Rec
     public long? LegacySearchBytes { get; init; }
 }
 
+internal sealed record UpdateCheckResult(bool UpdateAvailable, string Message, string? ReleaseUrl = null, bool Failed = false);
+
 internal static class SettingsOperations
 {
-    private static readonly HttpClient Updates = new() { Timeout = TimeSpan.FromSeconds(10) };
+    private const string PublicRepository = "Markio520/FileKite";
+    internal const string RepositoryUrl = "https://github.com/" + PublicRepository;
+    internal const string ReleasesUrl = RepositoryUrl + "/releases";
+    internal const string IssuesUrl = RepositoryUrl + "/issues";
+    private const string LatestReleaseApi = "https://api.github.com/repos/" + PublicRepository + "/releases/latest";
+    private static readonly Lazy<HttpClient> Updates = new(() => new() { Timeout = TimeSpan.FromSeconds(10) });
     private static readonly SemaphoreSlim portableGate = new(1, 1);
     private sealed record PortableDocument(int Version, AppSettings Settings, List<OutlineTemplate> Templates, IReadOnlyList<SavedSearch>? Searches = null);
     private sealed record ImportJournal(AppSettings Target, List<OutlineTemplate> OldTemplates, List<OutlineTemplate> NewTemplates,
@@ -163,17 +170,37 @@ internal static class SettingsOperations
 
     internal static async Task<string> CheckUpdatesAsync() => (await QueryUpdateAsync()).Message;
 
-    internal static async Task<(bool UpdateAvailable, string Message)> QueryUpdateAsync()
+    internal static async Task<UpdateCheckResult> QueryUpdateAsync()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/Markio520/FileKite/releases/latest");
-        request.Headers.UserAgent.ParseAdd("FileKite");
-        using var response = await Updates.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, App.Stopping);
-        if (response.StatusCode == HttpStatusCode.NotFound) return (false, InterfaceText.Get("此仓库尚无可读取的公开发布版本。", "This repository has no accessible public release."));
-        response.EnsureSuccessStatusCode();
-        using var release = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(App.Stopping), cancellationToken: App.Stopping);
-        var tag = release.RootElement.GetProperty("tag_name").GetString()?.TrimStart('v', 'V');
-        if (!Version.TryParse(tag, out var available)) throw new InvalidDataException(InterfaceText.Get("发布版本号无法识别。", "The release tag is not a version number."));
-        var newer = available > new Version(AppVersion);
-        return (newer, newer ? InterfaceText.Get("发现新版本 ", "Update available: ") + available : InterfaceText.Get("当前已是最新版本。", "You have the latest release."));
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, LatestReleaseApi);
+            request.Headers.UserAgent.ParseAdd($"FileKite/{AppVersion}");
+            using var response = await Updates.Value.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, App.Stopping);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return new(false, InterfaceText.Get("此仓库尚无可读取的公开发布版本。", "This repository has no accessible public release."), ReleasesUrl);
+            if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
+                return new(false, InterfaceText.Get("更新查询过于频繁，请稍后再试，或直接前往 GitHub 发布页查看。", "Update check rate-limited. Try again later or open the GitHub releases page."), ReleasesUrl, Failed: true);
+            response.EnsureSuccessStatusCode();
+            using var release = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(App.Stopping), cancellationToken: App.Stopping);
+            var tag = release.RootElement.GetProperty("tag_name").GetString()?.TrimStart('v', 'V');
+            if (!Version.TryParse(tag, out var available))
+                return new(false, InterfaceText.Get("发布版本号无法识别，请前往 GitHub 发布页查看。", "Could not parse the release version. Check the GitHub releases page."), ReleasesUrl, Failed: true);
+            var htmlUrl = release.RootElement.TryGetProperty("html_url", out var urlProp) ? urlProp.GetString() : null;
+            var releaseUrl = Uri.TryCreate(htmlUrl, UriKind.Absolute, out var parsed) && parsed.Scheme == Uri.UriSchemeHttps ? parsed.ToString() : ReleasesUrl;
+            var newer = available > new Version(AppVersion);
+            return newer
+                ? new(true, InterfaceText.Get($"发现新版本 v{available}，可点击右侧按钮前往下载。", $"Update v{available} is available. Open the download page to update."), releaseUrl)
+                : new(false, InterfaceText.Get($"当前 v{AppVersion} 已是最新版本。", $"You already have the latest release (v{AppVersion})."));
+        }
+        catch (OperationCanceledException) when (App.Stopping.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException or KeyNotFoundException)
+        {
+            App.ReportFailure(e);
+            return new(false, InterfaceText.Get("无法连接更新服务器，请检查网络或稍后重试。", "Unable to reach the update server. Check your network and try again."), ReleasesUrl, Failed: true);
+        }
     }
 }

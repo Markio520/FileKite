@@ -274,30 +274,43 @@ internal static class QuickLookDialog
             Grid.SetColumn(closeBtn, 2);
             headerGrid.Children.Add(closeBtn);
 
-            var rootStack = new StackPanel { Spacing = 12, HorizontalAlignment = HorizontalAlignment.Stretch };
-            rootStack.Children.Add(headerGrid);
-            rootStack.Children.Add(viewportBorder);
-            rootStack.Children.Add(compareBar);
+            var contentGrid = new Grid { RowSpacing = 12, Padding = new Thickness(20, 16, 20, 18), HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
+            contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            contentGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            contentGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            contentGrid.Children.Add(headerGrid);
+            Grid.SetRow(viewportBorder, 1);
+            contentGrid.Children.Add(viewportBorder);
+            Grid.SetRow(compareBar, 2);
+            contentGrid.Children.Add(compareBar);
 
-            var rootBorder = new Border
+            var rootGrid = new Grid
             {
-                Padding = new Thickness(20, 16, 20, 18),
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                Child = rootStack
+                Name = "QuickLookShell",
+                Background = WorkspaceMaterials.ThemeBrush(activeTheme, "WorkspaceDialogBrush"),
+                CornerRadius = new CornerRadius(12),
+                HorizontalAlignment = HorizontalAlignment.Stretch
             };
+            rootGrid.Children.Add(contentGrid);
 
+            double? customWidth = null, customHeight = null;
             double currentStageMaxHeight = 420;
             void ResizeDialog()
             {
                 var size = xamlRoot.Size;
-                rootBorder.Width = Math.Clamp(size.Width - 96, 320, 860);
-                currentStageMaxHeight = Math.Clamp(size.Height - 220, 220, 520);
+                var maxW = Math.Max(360, size.Width - 28);
+                var maxH = Math.Max(300, size.Height - 28);
+                var w = customWidth.HasValue ? Math.Clamp(customWidth.Value, Math.Min(480, maxW), maxW) : Math.Clamp(size.Width - 96, 320, 860);
+                var h = customHeight.HasValue ? Math.Clamp(customHeight.Value, Math.Min(360, maxH), maxH) : Math.Clamp(size.Height - 96, 360, 660);
+                rootGrid.Width = w;
+                rootGrid.Height = h;
+                currentStageMaxHeight = Math.Max(180, h - (compareBar.Visibility == Visibility.Visible ? 176 : 112));
                 baseImage.MaxHeight = currentStageMaxHeight;
                 compareOverlayImage.MaxHeight = currentStageMaxHeight;
                 imageStage.MaxHeight = currentStageMaxHeight + 8;
                 if (activeMediaElement is not null) activeMediaElement.MaxHeight = currentStageMaxHeight;
                 textScroll.MaxHeight = currentStageMaxHeight;
-                viewportBorder.MinHeight = Math.Min(320, currentStageMaxHeight);
+                viewportBorder.MinHeight = Math.Min(260, currentStageMaxHeight);
             }
             ResizeDialog();
 
@@ -310,16 +323,22 @@ internal static class QuickLookDialog
                 Foreground = WorkspaceMaterials.ThemeBrush(activeTheme, "WorkspaceTextBrush"),
                 BorderBrush = WorkspaceMaterials.ThemeBrush(activeTheme, "WorkspaceBorderBrush"),
                 CornerRadius = new CornerRadius(12),
-                Content = rootBorder
+                Content = rootGrid
             };
-            dialog.Resources["ContentDialogMaxWidth"] = 920d;
-            dialog.Resources["ContentDialogMaxHeight"] = 780d;
             dialog.Resources["ContentDialogMinWidth"] = 320d;
             dialog.Resources["ContentDialogMinHeight"] = 0d;
             dialog.Resources["ContentDialogPadding"] = new Thickness(0);
             dialog.Resources["ContentDialogTitleMargin"] = new Thickness(0);
             dialog.Resources["ContentDialogSeparatorThickness"] = new Thickness(0);
+            dialog.Resources["ContentDialogTopOverlay"] = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
             DialogDismiss.Attach(dialog);
+            ResizableDialogShell.Attach(
+                dialog,
+                rootGrid,
+                minWidth: 480,
+                minHeight: 360,
+                onResized: (w, h) => { customWidth = w; customHeight = h; ResizeDialog(); },
+                onReset: () => { customWidth = null; customHeight = null; ResizeDialog(); });
 
             rootChanged = (_, _) => ResizeDialog();
             xamlRoot.Changed += rootChanged;
@@ -488,7 +507,7 @@ internal static class QuickLookDialog
                 }
             };
 
-            rootBorder.KeyDown += async (_, e) =>
+            rootGrid.KeyDown += async (_, e) =>
             {
                 if (!dialogOpen) return;
                 if (IsPreviewShortcut(e.OriginalKey)) { e.Handled = true; dialog.Hide(); }

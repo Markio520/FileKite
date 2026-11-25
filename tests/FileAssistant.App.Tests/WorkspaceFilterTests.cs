@@ -6,6 +6,31 @@ namespace FileAssistant.App.Tests;
 public sealed class WorkspaceFilterTests
 {
     [Fact]
+    public void Preview_follows_selected_groups_even_when_a_filter_hides_them()
+    {
+        var vm = new WorkspaceViewModel();
+        var group = vm.CreateFolder("资料");
+        var empty = vm.CreateFolder("空组");
+        vm.EnterFolder(group);
+        vm.AddSearchFiles([new(@"D:\chosen.txt", false, 1, null)]);
+        vm.EnterFolder(Guid.Empty);
+        vm.AddSearchFiles([new(@"D:\other.txt", false, 2, null)]);
+        vm.SetSelection([vm.VisibleFiles.Single(row => row.FolderId == empty)]);
+        Assert.False(vm.CanPreviewSelection);
+        vm.SetSelection([vm.VisibleFiles.Single(row => row.FolderId == group)]);
+        vm.SearchText = "other";
+        Assert.Equal(0, vm.VisibleSelectedCount);
+        Assert.True(vm.CanPreviewSelection);
+        Assert.Equal("chosen.txt", Assert.Single(vm.SelectedEntries).Name);
+        vm.SearchText = "no-matching-row";
+        Assert.Empty(vm.VisibleFiles);
+        Assert.True(vm.ShowFloatingIsland);
+        vm.SetSelection([]);
+        Assert.False(vm.CanPreviewSelection);
+        Assert.False(vm.ShowFloatingIsland);
+    }
+
+    [Fact]
     public void Filtering_refreshes_once_and_preserves_rows_selection_and_staging_snapshots()
     {
         var vm = new WorkspaceViewModel();

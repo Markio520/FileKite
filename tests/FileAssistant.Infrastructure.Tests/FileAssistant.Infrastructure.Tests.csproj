@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
-    <Compile Include="../../src/FileAssistant.Infrastructure/FileSystem/DirectorySearchIndex.cs" />
+    <Compile Include="../../src/FileAssistant.Infrastructure/Windows/Everything*.cs;../../src/FileAssistant.Infrastructure/FileSystem/DirectorySearchIndex.cs" />
   </ItemGroup>
 
 </Project>

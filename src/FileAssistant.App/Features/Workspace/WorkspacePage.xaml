@@ -51,6 +51,75 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="LeftRailTaskButtonStyle" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+            <Setter Property="FocusVisualMargin" Value="-1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="NavRoot" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="NavRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" /><Setter Target="NavContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="NavRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="NavContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="AppearanceMenuOptionStyle" TargetType="ToggleButton">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="MinHeight" Value="{StaticResource SelectionDropDownMinHeight}" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid>
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="OptRoot.Background" Value="{ThemeResource ComboBoxItemBackgroundPointerOver}" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="OptRoot.Background" Value="{ThemeResource ComboBoxItemBackgroundPressed}" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Checked"><VisualState.Setters><Setter Target="OptRoot.Background" Value="{ThemeResource ComboBoxItemBackgroundSelected}" /><Setter Target="OptContent.FontWeight" Value="SemiBold" /><Setter Target="OptPill.Opacity" Value="1" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="CheckedPointerOver"><VisualState.Setters><Setter Target="OptRoot.Background" Value="{ThemeResource ComboBoxItemBackgroundSelectedPointerOver}" /><Setter Target="OptContent.FontWeight" Value="SemiBold" /><Setter Target="OptPill.Opacity" Value="1" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="CheckedPressed"><VisualState.Setters><Setter Target="OptRoot.Background" Value="{ThemeResource ComboBoxItemBackgroundSelectedPressed}" /><Setter Target="OptContent.FontWeight" Value="SemiBold" /><Setter Target="OptPill.Opacity" Value="1" /></VisualState.Setters></VisualState>
+                                    <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="OptRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Border x:Name="OptRoot" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter x:Name="OptContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="OptPill" Width="3" Height="16" CornerRadius="1.5" Background="{ThemeResource SelectionIndicatorBrush}"
+                                HorizontalAlignment="Left" VerticalAlignment="Center" Opacity="0" IsHitTestVisible="False" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid>
@@ -212,13 +281,21 @@
                         </ToggleButton>
                         <Button x:Name="TopTasksButton" Style="{StaticResource TitleBarChromeIconStyle}" Width="Auto" MinWidth="30" Padding="7,0" Click="TaskQueue_Click" controls:WorkspaceLocalization.Name="任务队列" controls:WorkspaceLocalization.Tip="{x:Bind Jobs.Summary, Mode=OneWay}">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <ProgressRing Width="14" Height="14" IsIndeterminate="False" Value="{x:Bind Jobs.OverallProgress, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" Foreground="{ThemeResource WorkspaceAccentBrush}" />
+                                <ProgressRing Width="14" Height="14" IsIndeterminate="False" Value="{x:Bind Jobs.RingProgress, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" Foreground="{ThemeResource WorkspaceAccentBrush}" />
                                 <FontIcon x:Name="TopTasksIdleIcon" Glyph="&#xE9D5;" FontSize="14" Visibility="{x:Bind Jobs.IsIdle, Mode=OneWay}" />
+                                <Border x:Name="TopTasksBadge" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="7" Padding="5,1" Visibility="{x:Bind Jobs.HasIdleHistory, Mode=OneWay}">
+                                    <TextBlock Text="{x:Bind Jobs.TotalCount, Mode=OneWay}" FontSize="10.5" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                </Border>
                                 <TextBlock Text="{x:Bind Jobs.CompactPercent, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" FontSize="11" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
                         <Border Width="1" Height="14" Background="{ThemeResource WorkspaceBorderBrush}" Margin="3,0" VerticalAlignment="Center" />
                     </StackPanel>
+
+                    <ToggleButton x:Name="TitlePinButton" Style="{StaticResource TitleBarChromeToggleStyle}" Click="TitlePin_Click"
+                        controls:WorkspaceLocalization.Name="固定窗口（置顶显示）" controls:WorkspaceLocalization.Tip="固定窗口（置顶显示）">
+                        <FontIcon x:Name="TitlePinIcon" Glyph="&#xE718;" FontSize="14" />
+                    </ToggleButton>
 
                     <Button x:Name="NavModeToggleButton" Style="{StaticResource TitleBarChromeIconStyle}" Click="NavModeToggle_Click"
                         controls:WorkspaceLocalization.Name="切换左侧工作区或单行融合顶栏" controls:WorkspaceLocalization.Tip="切换为单行融合顶栏">
@@ -228,17 +305,38 @@
                     <Button x:Name="TitleAppearanceButton" Style="{StaticResource TitleBarChromeIconStyle}" controls:WorkspaceLocalization.Name="切换外观材质" controls:WorkspaceLocalization.Tip="切换外观材质">
                         <FontIcon x:Name="TitleAppearanceIcon" Glyph="&#xE706;" FontSize="14" />
                         <Button.Flyout>
-                            <MenuFlyout x:Name="AppearanceMenuFlyout" Placement="BottomEdgeAlignedRight" Opening="AppearanceFlyout_Opening">
-                                <ToggleMenuFlyoutItem x:Name="ThemeLightItem" controls:WorkspaceLocalization.Text="浅色（暖白纸感）" Tag="Light" Click="AppearanceMenu_Click" />
-                                <ToggleMenuFlyoutItem x:Name="ThemeCharcoalItem" controls:WorkspaceLocalization.Text="炭黑云母（深色）" Tag="CharcoalGlass" Click="AppearanceMenu_Click" />
-                                <MenuFlyoutSeparator />
-                                <ToggleMenuFlyoutItem x:Name="ThemeSystemItem" controls:WorkspaceLocalization.Text="跟随系统" Tag="System" Click="AppearanceMenu_Click" />
-                            </MenuFlyout>
+                            <Flyout x:Name="AppearanceMenuFlyout" Placement="BottomEdgeAlignedRight" Opening="AppearanceFlyout_Opening"
+                                FlyoutPresenterStyle="{StaticResource SelectionDropDownPresenterStyle}">
+                                <StackPanel Spacing="1" MinWidth="184">
+                                    <ToggleButton x:Name="ThemeLightItem" Tag="Light" Style="{StaticResource AppearanceMenuOptionStyle}" Click="AppearanceMenu_Click">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="ThemeLightLabel" controls:WorkspaceLocalization.Text="浅色（沙白画廊）" VerticalAlignment="Center" />
+                                            <Border x:Name="ThemeLightSwatch" Grid.Column="1" Width="12" Height="12" CornerRadius="6" BorderThickness="1.5" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="ThemeCharcoalItem" Tag="CharcoalGlass" Style="{StaticResource AppearanceMenuOptionStyle}" Click="AppearanceMenu_Click">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="ThemeCharcoalLabel" controls:WorkspaceLocalization.Text="深色（炭黑微光）" VerticalAlignment="Center" />
+                                            <Border x:Name="ThemeCharcoalSwatch" Grid.Column="1" Width="12" Height="12" CornerRadius="6" BorderThickness="1.5" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ToggleButton>
+                                    <Border Height="1" Margin="8,3" Background="{ThemeResource OpDividerBrush}" />
+                                    <ToggleButton x:Name="ThemeSystemItem" Tag="System" Style="{StaticResource AppearanceMenuOptionStyle}" Click="AppearanceMenu_Click">
+                                        <Grid ColumnSpacing="10">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="ThemeSystemLabel" controls:WorkspaceLocalization.Text="跟随系统" VerticalAlignment="Center" />
+                                            <FontIcon Grid.Column="1" Glyph="&#xE770;" FontSize="11.5" Foreground="{ThemeResource WorkspaceSecondaryBrush}" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ToggleButton>
+                                </StackPanel>
+                            </Flyout>
                         </Button.Flyout>
                     </Button>
 
                     <Button x:Name="TitleSettingsButton" Style="{StaticResource TitleBarChromeIconStyle}" Click="Settings_Click" controls:WorkspaceLocalization.Name="设置与引擎管理" controls:WorkspaceLocalization.Tip="设置与引擎管理">
-                        <FontIcon Glyph="&#xE713;" FontSize="14" />
+                        <FontIcon x:Name="TitleSettingsIcon" Glyph="&#xE713;" FontSize="14" />
                     </Button>
                 </StackPanel>
             </TitleBar.RightHeader>
@@ -264,8 +362,7 @@
                     Content="" ContentTemplate="{StaticResource WorkspaceLeftPaneIconTemplate}" />
             </Grid>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
-                <Grid>
+            <ScrollViewer x:Name="LeftNavigationScroll" Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel x:Name="LeftMainNavigation" Spacing="2" controls:WorkspaceLocalization.Name="主要功能分组导航">
                         <TextBlock x:Name="LeftGroupCollect" controls:WorkspaceLocalization.Text="收集与检索" Style="{StaticResource WorkspaceNavGroupHeaderStyle}" Margin="10,4,8,3" />
                         <ToggleButton x:Name="LeftWorkspaceNav" Tag="workspace" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" IsChecked="True" AllowDrop="True" DragOver="NavTarget_DragOver" DragLeave="NavTarget_DragLeave" Drop="NavTarget_Drop" controls:WorkspaceLocalization.Name="文件暂存区" controls:WorkspaceLocalization.Tip="文件暂存区（支持直接拖入文件）">
@@ -273,9 +370,11 @@
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <FontIcon Glyph="&#xE8F7;" FontSize="15" HorizontalAlignment="Center" />
                                 <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="暂存区" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                <Border x:Name="LeftWorkspaceBadge" Grid.Column="2" Tag="RailLabel" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="8" Padding="6,1" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasAnyReferences, Mode=OneWay}">
-                                    <TextBlock Text="{x:Bind ViewModel.TotalReferenceCount, Mode=OneWay}" FontSize="11" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
-                                </Border>
+                                <Grid Grid.Column="2" Tag="RailLabel">
+                                    <Border x:Name="LeftWorkspaceBadge" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="8" Padding="6,1" VerticalAlignment="Center" Visibility="{x:Bind ViewModel.HasAnyReferences, Mode=OneWay}">
+                                        <TextBlock Text="{x:Bind ViewModel.TotalReferenceCount, Mode=OneWay}" FontSize="11" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                                    </Border>
+                                </Grid>
                             </Grid>
                         </ToggleButton>
                         <ToggleButton x:Name="LeftSearchNav" Tag="search" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="搜索与筛选" controls:WorkspaceLocalization.Tip="搜索与筛选">
@@ -326,35 +425,43 @@
                         </ToggleButton>
                     </StackPanel>
 
-                    <Border x:Name="LeftSlidingPill" Width="3" Height="16" CornerRadius="1.5" Background="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
-                        <Border.RenderTransform><TranslateTransform x:Name="LeftSlidingTransform" /></Border.RenderTransform>
-                    </Border>
-                </Grid>
             </ScrollViewer>
 
-            <!-- Bottom Pinned Pod: Outputs + Live Mini Task Ring (with Completion Checkmark Morph) -->
-            <StackPanel Grid.Row="2" Spacing="5" Padding="0,6,0,0" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,1,0,0">
-                <ToggleButton x:Name="LeftOutputsNav" Tag="outputs" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="文件输出区" controls:WorkspaceLocalization.Tip="文件输出区">
+            <!-- Bottom Pinned Pod: Outputs + Scheme A Quiet-Idle / Live-Active Task Queue Row -->
+            <StackPanel Grid.Row="2" Spacing="2" Padding="0,6,0,0" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,1,0,0">
+                <ToggleButton x:Name="LeftOutputsNav" Tag="outputs" Style="{StaticResource MainRailNavItemStyle}" Click="Navigation_Click" controls:WorkspaceLocalization.Name="文件输出区" controls:WorkspaceLocalization.Tip="文件输出区">
                     <Grid ColumnSpacing="10">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <FontIcon Glyph="&#xE8A5;" FontSize="15" HorizontalAlignment="Center" />
                         <TextBlock Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="文件输出区" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                        <Border x:Name="LeftOutputsBadge" Grid.Column="2" Tag="RailLabel" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="8" Padding="6,1" VerticalAlignment="Center" Visibility="{x:Bind Outputs.HasFiles, Mode=OneWay}">
-                            <TextBlock Text="{x:Bind Outputs.TotalCount, Mode=OneWay}" FontSize="11" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
-                        </Border>
+                        <Grid Grid.Column="2" Tag="RailLabel">
+                            <Border x:Name="LeftOutputsBadge" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="8" Padding="6,1" VerticalAlignment="Center" Visibility="{x:Bind Outputs.HasFiles, Mode=OneWay}">
+                                <TextBlock Text="{x:Bind Outputs.TotalCount, Mode=OneWay}" FontSize="11" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                            </Border>
+                        </Grid>
                     </Grid>
                 </ToggleButton>
 
-                <Button x:Name="LeftTasksButton" Click="TaskQueue_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="9,6" MinHeight="34" CornerRadius="7" Background="{ThemeResource WorkspaceCardBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" controls:WorkspaceLocalization.Name="任务队列" controls:WorkspaceLocalization.Tip="{x:Bind Jobs.Summary, Mode=OneWay}">
-                    <Grid ColumnSpacing="9">
+                <Button x:Name="LeftTasksButton" Style="{StaticResource LeftRailTaskButtonStyle}" Click="TaskQueue_Click" controls:WorkspaceLocalization.Name="任务队列" controls:WorkspaceLocalization.Tip="{x:Bind Jobs.Summary, Mode=OneWay}">
+                    <Grid ColumnSpacing="10">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <ProgressRing Width="16" Height="16" IsIndeterminate="False" Value="{x:Bind Jobs.OverallProgress, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" Foreground="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <FontIcon x:Name="LeftTasksIdleIcon" Glyph="&#xE9D5;" FontSize="14" Visibility="{x:Bind Jobs.IsIdle, Mode=OneWay}" Foreground="{ThemeResource WorkspaceSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <TextBlock x:Name="LeftTasksLabel" Grid.Column="1" controls:WorkspaceLocalization.Text="{x:Bind Jobs.CompactLabel, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                        <TextBlock x:Name="LeftTasksPercent" Grid.Column="2" Text="{x:Bind Jobs.CompactPercent, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" FontSize="11" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" VerticalAlignment="Center" />
+                        <ProgressRing Width="15" Height="15" IsIndeterminate="False" Value="{x:Bind Jobs.RingProgress, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" Foreground="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <FontIcon x:Name="LeftTasksIdleIcon" Glyph="&#xE9D5;" FontSize="15" Visibility="{x:Bind Jobs.IsIdle, Mode=OneWay}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock x:Name="LeftTasksLabel" Grid.Column="1" Tag="RailLabel" controls:WorkspaceLocalization.Text="{x:Bind Jobs.CompactLabel, Mode=OneWay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <Grid Grid.Column="2" Tag="RailLabel">
+                            <Border x:Name="LeftTasksBadge" Background="{ThemeResource WorkspaceSubtleBrush}" CornerRadius="8" Padding="6,1" VerticalAlignment="Center" Visibility="{x:Bind Jobs.HasIdleHistory, Mode=OneWay}">
+                                <TextBlock Text="{x:Bind Jobs.TotalCount, Mode=OneWay}" FontSize="11" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                            </Border>
+                            <TextBlock x:Name="LeftTasksPercent" Text="{x:Bind Jobs.CompactPercent, Mode=OneWay}" Visibility="{x:Bind Jobs.HasRunningJobs, Mode=OneWay}" FontSize="11.5" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" VerticalAlignment="Center" />
+                        </Grid>
                     </Grid>
                 </Button>
             </StackPanel>
+            <Grid x:Name="LeftIndicatorLayer" Grid.Row="1" Grid.RowSpan="2" IsHitTestVisible="False">
+                <Border x:Name="LeftSlidingPill" Width="3" Height="16" CornerRadius="1.5" Background="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Border.RenderTransform><TranslateTransform x:Name="LeftSlidingTransform" /></Border.RenderTransform>
+                </Border>
+            </Grid>
         </Grid>
 
         <!-- Elevated Inset Rounded Workbench Sheet with 1px Specular Top Rim & ThemeShadow -->

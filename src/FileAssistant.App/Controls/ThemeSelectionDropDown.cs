@@ -16,8 +16,8 @@ public sealed class ThemeSelectionDropDown : SelectionDropDown
         WorkspaceLocalization.SetOptions(this, true);
         ItemsSource = new SelectionOption[]
         {
-            new((int)WorkspaceAppearance.CharcoalGlass, "炭黑玻璃"),
-            new((int)WorkspaceAppearance.Light, "浅色"),
+            new((int)WorkspaceAppearance.Light, "浅色（沙白画廊）"),
+            new((int)WorkspaceAppearance.CharcoalGlass, "深色（炭黑微光）"),
             new((int)WorkspaceAppearance.System, "跟随系统")
         };
         ButtonContent = new FontIcon { Glyph = "\uE790", FontSize = 16 };

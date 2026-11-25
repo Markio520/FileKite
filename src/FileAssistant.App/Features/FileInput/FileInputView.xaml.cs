@@ -182,14 +182,10 @@ public sealed partial class FileInputView : UserControl
         (Core.Engines.ConversionTarget Target, int Quality)? conversion = compare &&
             ViewModel.Purpose == WorkspaceInputPurpose.Conversion && App.Conversion.ShowQuality
             ? (format, (int)App.Conversion.Quality) : null;
-        var selected = FileList.SelectedItems.OfType<WorkspaceFile>().Where(f => !f.IsCollectionFolder).Select(f => f.Source).OfType<SearchFile>().ToArray();
-        if (selected.Length > 0)
-        {
-            await Preview.QuickLookDialog.ShowAsync(this, selected, 0, compare, conversion);
-            return;
-        }
-        var allVisible = ViewModel.VisibleFiles.Where(f => !f.IsCollectionFolder).Select(f => f.Source).OfType<SearchFile>().ToArray();
-        if (allVisible.Length > 0) await Preview.QuickLookDialog.ShowAsync(this, allVisible, 0, compare, conversion);
+        var rows = ViewModel.HasSelection ? ViewModel.SelectedRows : ViewModel.VisibleFiles;
+        var files = ViewModel.HasSelection && rows.Any(row => row.IsCollectionFolder) ? ViewModel.SelectedEntries
+            : rows.Select(row => row.Source).OfType<SearchFile>().ToArray();
+        if (files.Count > 0) await Preview.QuickLookDialog.ShowAsync(this, files, 0, compare, conversion);
     }
 
     private void SendSelected_Click(object sender, RoutedEventArgs e) => SendToCopy(ViewModel.ExportSelection());
@@ -198,7 +194,7 @@ public sealed partial class FileInputView : UserControl
     private void ConvertAll_Click(object sender, RoutedEventArgs e) => SendToConversion(ViewModel.ExportCurrentFolder());
     private void RenameSelected_Click(object sender, RoutedEventArgs e) => SendToNaming(ViewModel.ExportSelection());
     private void RenameAll_Click(object sender, RoutedEventArgs e) => SendToNaming(ViewModel.ExportCurrentFolder());
-    private void ClearSelection_Click(object sender, RoutedEventArgs e) => FileList.SelectedItems.Clear();
+    private void ClearSelection_Click(object sender, RoutedEventArgs e) => ViewModel.SetSelection([]);
     private void SendToConversion(FileCollectionBundle bundle)
     { if (bundle.HasItems && ViewModel.CanReceiveFiles) FilesForConversionRequested?.Invoke(this, new(bundle)); }
     private void SendToCopy(FileCollectionBundle bundle)
@@ -287,6 +283,7 @@ public sealed partial class FileInputView : UserControl
             current ?? FileList.SelectedItems.OfType<WorkspaceFile>().FirstOrDefault());
     }
     private async void Remove_Click(object sender, RoutedEventArgs e) => await RemoveSelectionAsync();
+    private async void RemoveIslandSelection_Click(object sender, RoutedEventArgs e) => await RemoveItemsAsync(ViewModel.SelectedRows);
     private async void Remove_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) { if (EditingText()) return; args.Handled = true; await RemoveSelectionAsync(); }
     private void SelectAll_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args) { if (EditingText()) return; FileList.SelectAll(); args.Handled = true; }
     private Task RemoveSelectionAsync() => RemoveItemsAsync(FileList.SelectedItems.OfType<WorkspaceFile>().ToArray());

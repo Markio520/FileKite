@@ -1,20 +1,31 @@
 using System;
+using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using FileAssistant.App.Features.Settings;
 using FileAssistant.App.Features.Workspace;
 using FileAssistant.Infrastructure.Windows;
 using Microsoft.UI;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Foundation;
 using Windows.Graphics;
+using Windows.UI;
 
 namespace FileAssistant.App;
 
 public sealed partial class MainWindow : Window
 {
     private bool released;
+    private int rippleGeneration;
+    private bool rippleActive;
+    private CompositionScopedBatch? rippleBatch;
     private readonly WindowIcons icons;
     internal WorkspacePage? WorkspacePage => RootFrame.Content as WorkspacePage;
 
@@ -57,9 +68,154 @@ public sealed partial class MainWindow : Window
     {
         if (released) return;
         released = true;
+        CleanupThemeRipple();
         icons.Dispose();
         WindowRoot.ActualThemeChanged -= WindowRoot_ActualThemeChanged;
         App.Appearance.PropertyChanged -= AppearanceChanged;
+    }
+
+    internal async Task SwitchAppearanceWithRippleAsync(WorkspaceAppearance next, Point? originInWindowRoot)
+    {
+        if (released) return;
+        var currentLight = WindowRoot.ActualTheme == ElementTheme.Light;
+        var targetLight = Resources.WorkspaceMaterials.IsActiveLightTheme(
+            App.Preferences.Current with { Mode = (Core.Settings.AppearanceMode)(int)next });
+
+        if (currentLight == targetLight ||
+            !Controls.WorkspaceMotion.Enabled ||
+            !WindowRoot.IsLoaded ||
+            WindowRoot.ActualWidth <= 0 ||
+            WindowRoot.ActualHeight <= 0)
+        {
+            App.Appearance.Style = next;
+            return;
+        }
+
+        CleanupThemeRipple();
+        var gen = ++rippleGeneration;
+        var width = (float)WindowRoot.ActualWidth;
+        var height = (float)WindowRoot.ActualHeight;
+        var origin = originInWindowRoot ?? new Point(Math.Max(0, width - 170f), 24f);
+        var cx = Math.Clamp((float)origin.X, 0f, width);
+        var cy = Math.Clamp((float)origin.Y, 0f, height);
+
+        try
+        {
+            var rtb = new RenderTargetBitmap();
+            await rtb.RenderAsync(RippleRevealHost);
+            if (released || gen != rippleGeneration) return;
+
+            var oldBg = ResolveThemeColor(currentLight, "AppBackgroundColor");
+            var newBg = ResolveThemeColor(targetLight, "AppBackgroundColor");
+            var accent = ResolveThemeColor(targetLight, "AppAccentColor");
+
+            ThemeRippleBackdrop.Background = new SolidColorBrush(oldBg);
+            ThemeRippleSnapshot.Source = rtb;
+            ThemeRippleBackdrop.Visibility = Visibility.Visible;
+
+            var hostVisual = ElementCompositionPreview.GetElementVisual(RippleRevealHost);
+            var compositor = hostVisual.Compositor;
+            var center = new Vector2(cx, cy);
+            var dx = MathF.Max(cx, width - cx);
+            var dy = MathF.Max(cy, height - cy);
+            var maxRadius = MathF.Sqrt(dx * dx + dy * dy) + 16f;
+
+            var clipEllipse = compositor.CreateEllipseGeometry();
+            clipEllipse.Center = center;
+            clipEllipse.Radius = Vector2.Zero;
+            hostVisual.Clip = compositor.CreateGeometricClip(clipEllipse);
+            RippleRevealHost.Background = new SolidColorBrush(newBg);
+
+            var ringEllipse = compositor.CreateEllipseGeometry();
+            ringEllipse.Center = center;
+            ringEllipse.Radius = Vector2.Zero;
+            var ringShape = compositor.CreateSpriteShape(ringEllipse);
+            ringShape.StrokeBrush = compositor.CreateColorBrush(accent);
+            ringShape.StrokeThickness = 2f;
+            var ringVisual = compositor.CreateShapeVisual();
+            ringVisual.Size = new Vector2(width, height);
+            ringVisual.Opacity = 0.44f;
+            ringVisual.Shapes.Add(ringShape);
+            ElementCompositionPreview.SetElementChildVisual(ThemeRippleRingHost, ringVisual);
+
+            rippleActive = true;
+            App.Appearance.Style = next;
+
+            var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.22f, 1f), new Vector2(0.36f, 1f));
+            var duration = TimeSpan.FromMilliseconds(440);
+
+            var radiusAnim = compositor.CreateVector2KeyFrameAnimation();
+            radiusAnim.InsertKeyFrame(0f, Vector2.Zero);
+            radiusAnim.InsertKeyFrame(1f, new Vector2(maxRadius, maxRadius), ease);
+            radiusAnim.Duration = duration;
+
+            var ringFade = compositor.CreateScalarKeyFrameAnimation();
+            ringFade.InsertKeyFrame(0f, 0.44f);
+            ringFade.InsertKeyFrame(0.65f, 0.22f, ease);
+            ringFade.InsertKeyFrame(1f, 0f, ease);
+            ringFade.Duration = duration;
+
+            var batch = compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
+            rippleBatch = batch;
+            clipEllipse.StartAnimation("Radius", radiusAnim);
+            ringEllipse.StartAnimation("Radius", radiusAnim);
+            ringVisual.StartAnimation("Opacity", ringFade);
+            batch.End();
+            batch.Completed += (_, _) =>
+            {
+                if (gen == rippleGeneration) CleanupThemeRipple();
+            };
+        }
+        catch (Exception)
+        {
+            CleanupThemeRipple();
+            App.Appearance.Style = next;
+        }
+    }
+
+    internal bool IsThemeRippleActive => rippleActive;
+
+    internal void CleanupThemeRipple()
+    {
+        rippleGeneration++;
+        rippleActive = false;
+        if (rippleBatch is not null)
+        {
+            try { rippleBatch.Dispose(); } catch (Exception) { }
+            rippleBatch = null;
+        }
+        try
+        {
+            if (RippleRevealHost is not null)
+            {
+                ElementCompositionPreview.GetElementVisual(RippleRevealHost).Clip = null;
+                RippleRevealHost.Background = null;
+            }
+            if (ThemeRippleRingHost is not null)
+                ElementCompositionPreview.SetElementChildVisual(ThemeRippleRingHost, null);
+            if (ThemeRippleBackdrop is not null)
+            {
+                ThemeRippleBackdrop.Visibility = Visibility.Collapsed;
+                ThemeRippleBackdrop.Background = null;
+            }
+            if (ThemeRippleSnapshot is not null)
+                ThemeRippleSnapshot.Source = null;
+        }
+        catch (Exception) { }
+    }
+
+    private static Color ResolveThemeColor(bool light, string key)
+    {
+        var dictKey = light ? "Light" : "Dark";
+        foreach (var dict in Application.Current.Resources.MergedDictionaries.Reverse())
+        {
+            if (dict.ThemeDictionaries.TryGetValue(dictKey, out var themed) &&
+                themed is ResourceDictionary td &&
+                td.TryGetValue(key, out var val) &&
+                val is Color color)
+                return color;
+        }
+        return light ? ColorHelper.FromArgb(255, 0xEE, 0xEE, 0xE8) : ColorHelper.FromArgb(255, 0x16, 0x18, 0x1D);
     }
 
     private void WindowRoot_ActualThemeChanged(FrameworkElement sender, object args)
@@ -86,12 +242,13 @@ public sealed partial class MainWindow : Window
         Resources.WorkspaceMaterials.Apply();
         SystemBackdrop = App.Preferences.Current.Mica ? new MicaBackdrop { Kind = Microsoft.UI.Composition.SystemBackdrops.MicaKind.BaseAlt } : null;
         UpdateCaptionColors();
-        Controls.WorkspaceMotion.PlayThemeCrossfade(WindowRoot);
+        if (!rippleActive) Controls.WorkspaceMotion.PlayThemeCrossfade(WindowRoot);
     }
 
     internal void ApplyPreferences(Core.Settings.AppSettings previous, Core.Settings.AppSettings next)
     {
         if (AppWindow.Presenter is OverlappedPresenter presenter) presenter.IsAlwaysOnTop = next.AlwaysOnTop;
+        if (previous.AlwaysOnTop != next.AlwaysOnTop) WorkspacePage?.ApplyAlwaysOnTop(next.AlwaysOnTop, animate: true);
         if (previous.Mode != next.Mode || previous.Palette != next.Palette || previous.Mica != next.Mica) ApplyAppearance();
         if (previous.Shortcuts != next.Shortcuts) WorkspacePage?.RebindShortcuts();
         if (previous.Language != next.Language) Title = InterfaceText.WindowTitle;

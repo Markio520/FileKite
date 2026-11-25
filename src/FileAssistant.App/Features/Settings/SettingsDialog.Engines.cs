@@ -193,8 +193,7 @@ public sealed partial class SettingsDialog
         {
             Style = LocalStyle("SettingExpander"),
             Header = headerHost,
-            Content = contentHost,
-            IsExpanded = id == "libreoffice"
+            Content = contentHost
         };
         AutomationProperties.SetName(expander, title);
         AutomationProperties.SetAutomationId(expander, "Settings.Engine." + id);

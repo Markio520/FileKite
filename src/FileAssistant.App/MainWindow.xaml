@@ -14,6 +14,13 @@
     </Window.SystemBackdrop>
 
     <Grid x:Name="WindowRoot" Background="{ThemeResource WorkspaceBackgroundBrush}" ActualThemeChanged="WindowRoot_ActualThemeChanged">
-        <Frame x:Name="RootFrame" />
+        <Grid x:Name="ThemeRippleBackdrop" Visibility="Collapsed" IsHitTestVisible="False">
+            <Image x:Name="ThemeRippleSnapshot" Stretch="Fill" />
+        </Grid>
+        <Grid x:Name="RippleRevealHost">
+            <Frame x:Name="RootFrame" />
+        </Grid>
+        <Grid x:Name="ThemeRippleRingHost" IsHitTestVisible="False" Canvas.ZIndex="30" />
+        <controls:WindowResizeGrip x:Name="MainWindowResizeGrip" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,2,2" Canvas.ZIndex="40" />
     </Grid>
 </Window>

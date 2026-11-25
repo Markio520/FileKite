@@ -13,7 +13,7 @@ namespace FileAssistant.App.Features.Settings;
 
 public sealed partial class SettingsDialog
 {
-    private sealed record Palette(string Id, string Zh, string En, bool Light);
+    internal sealed record Palette(string Id, string Zh, string En, bool Light);
     private static readonly Palette[] Palettes =
     [
         new("charcoal", "炭黑微光", "Charcoal Glow", false), new("ocean", "深海松石", "Deep Ocean", false),
@@ -21,6 +21,17 @@ public sealed partial class SettingsDialog
         new("sand", "沙白画廊", "Sand Gallery", true), new("frost", "云杉雾白", "Spruce Mist", true),
         new("linen", "暖杏羊皮", "Apricot Linen", true), new("studio", "极简纯白", "Studio White", true)
     ];
+
+    internal static Palette EffectivePaletteForMode(AppSettings s, bool light) =>
+        Palettes.FirstOrDefault(p => p.Id == s.Palette && p.Light == light) ?? Palettes[light ? 4 : 0];
+
+    internal static string FormatModeMenuLabel(AppSettings s, bool light)
+    {
+        var preset = EffectivePaletteForMode(s, light);
+        return light
+            ? InterfaceText.Get($"浅色（{preset.Zh}）", $"Light ({preset.En})", s.Language)
+            : InterfaceText.Get($"深色（{preset.Zh}）", $"Dark ({preset.En})", s.Language);
+    }
 
     private void BuildAppearance()
     {

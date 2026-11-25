@@ -11,6 +11,62 @@ public sealed class FileCollectionStoreTests : IDisposable
     private readonly string root = Path.Combine(Path.GetTempPath(), "FileAssistant-collection-test-" + Guid.NewGuid().ToString("N"));
     public FileCollectionStoreTests() => Directory.CreateDirectory(root);
     [Fact]
+    public async Task Older_rows_with_display_fields_round_trip_using_only_their_source_metadata()
+    {
+        var source = Path.Combine(root, "样本.txt");
+        await File.WriteAllTextAsync(source, "abcd");
+        var collection = new FileCollection();
+        collection.AddFiles(default, [new(source, false, 4, null)]);
+        var target = Path.Combine(root, "staging.json");
+        await File.WriteAllTextAsync(target, JsonSerializer.Serialize(collection.Snapshot()));
+        var store = new JsonFileCollectionStore(target);
+        var loaded = (await store.LoadAsync(default)).Snapshot!;
+        await store.SaveAsync(loaded, default);
+        using var compact = JsonDocument.Parse(await File.ReadAllTextAsync(target));
+        var file = compact.RootElement.GetProperty("Entries")[0].GetProperty("File");
+        Assert.False(file.TryGetProperty("Directory", out _));
+        Assert.False(file.TryGetProperty("Name", out _));
+        Assert.False(file.TryGetProperty("Extension", out _));
+        Assert.Equal(loaded.Entries[0], (await store.LoadAsync(default)).Snapshot!.Entries[0]);
+    }
+
+    [Theory]
+    [InlineData("utf-8")]
+    [InlineData("utf-16")]
+    [InlineData("utf-32BE")]
+    public async Task Restore_accepts_previously_supported_unicode_byte_order_marks(string encoding)
+    {
+        var target = Path.Combine(root, "old.json");
+        var collection = new FileCollection();
+        var folder = collection.CreateFolder(default, "原分组");
+        await File.WriteAllTextAsync(target, JsonSerializer.Serialize(collection.Snapshot(folder)), System.Text.Encoding.GetEncoding(encoding));
+        var result = await new JsonFileCollectionStore(target).LoadAsync(default);
+        Assert.Equal(folder, result.Snapshot!.CurrentFolderId);
+        Assert.Equal("原分组", Assert.Single(result.Snapshot.Folders).Name);
+    }
+
+    [Fact]
+    public async Task Restoring_rechecks_the_current_type_of_a_replaced_file_and_folder()
+    {
+        var nowFolder = Directory.CreateDirectory(Path.Combine(root, "was-a-file")).FullName;
+        var nowFile = Path.Combine(root, "was-a-folder");
+        await File.WriteAllTextAsync(nowFile, "abc");
+        var collection = new FileCollection();
+        collection.AddFiles(default, [new(nowFolder, false, 9, null), new(nowFile, true, null, null)]);
+        var store = new JsonFileCollectionStore(Path.Combine(root, "staging.json"));
+        await store.SaveAsync(collection.Snapshot(), default);
+
+        var loaded = await store.LoadAsync(default);
+        Assert.Null(loaded.Message);
+        var restored = loaded.Snapshot!.Entries;
+        Assert.All(restored, entry => Assert.Null(entry.Error));
+        Assert.True(restored[0].File.IsFolder);
+        Assert.Null(restored[0].File.Size);
+        Assert.False(restored[1].File.IsFolder);
+        Assert.Equal(3L, restored[1].File.Size);
+    }
+
+    [Fact]
     public async Task Real_references_restore_metadata_and_missing_paths_remain_visible_without_touching_sources()
     {
         var source = Path.Combine(root, "原件.txt"); await File.WriteAllTextAsync(source, "original 中文");

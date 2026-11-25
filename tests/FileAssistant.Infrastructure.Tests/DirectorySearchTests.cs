@@ -1,5 +1,6 @@
 using FileAssistant.Core.Features.Search;
 using FileAssistant.Infrastructure.FileSystem;
+using FileAssistant.Infrastructure.Windows;
 
 namespace FileAssistant.Infrastructure.Tests;
 
@@ -35,6 +36,11 @@ public sealed class DirectorySearchTests : IDisposable
         var index = new DirectorySearchIndex();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => index.SearchAsync(new() { Folder = root }, null, new(true)));
         Assert.Equal(3, (await index.SearchAsync(new() { Folder = root }, null, default)).Total);
+    }
+    [Fact] public async Task Missing_everything_instance_reports_actionable_error()
+    {
+        var error = await Assert.ThrowsAsync<SearchException>(() => new EverythingSearchClient(Guid.NewGuid().ToString()).SearchAsync(new(), default));
+        Assert.Contains("指定目录", error.Message);
     }
     public void Dispose()
     {

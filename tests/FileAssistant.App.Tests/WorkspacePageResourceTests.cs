@@ -5,6 +5,42 @@ namespace FileAssistant.App.Tests;
 public sealed class WorkspacePageResourceTests
 {
     [Fact]
+    public void Outputs_uses_the_same_navigation_and_file_list_styles_as_the_workspace()
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "StartupXaml");
+        var page = XElement.Load(Path.Combine(directory, "WorkspacePage.xaml"));
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var nav = page.Descendants().Single(e => (string?)e.Attribute(x + "Name") == "LeftWorkspaceNav");
+        var outputsNav = page.Descendants().Single(e => (string?)e.Attribute(x + "Name") == "LeftOutputsNav");
+        Assert.Equal("{StaticResource MainRailNavItemStyle}", (string?)nav.Attribute("Style"));
+        Assert.Equal(nav.Attribute("Style")!.Value, (string?)outputsNav.Attribute("Style"));
+
+        foreach (var name in new[] { "FileInputView.xaml", "OutputsView.xaml" })
+        {
+            var view = XElement.Load(Path.Combine(directory, name));
+            var styles = view.Descendants().Attributes("Style").Select(a => a.Value).ToArray();
+            Assert.Contains("{StaticResource WorkspaceFileListHeaderStyle}", styles);
+            Assert.Contains("{StaticResource WorkspaceFileListFooterStyle}", styles);
+            Assert.Contains("{StaticResource WorkspaceFloatingIslandStyle}", styles);
+        }
+    }
+
+    [Fact]
+    public void Selection_bar_uses_matching_system_text_and_background_pairs_in_high_contrast()
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "StartupXaml", "Resources");
+        var palette = XElement.Load(Path.Combine(directory, "ThemePalette.xaml"));
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var contrast = palette.Descendants().Single(d => (string?)d.Attribute(x + "Key") == "HighContrast");
+        string? Color(string key) => (string?)contrast.Elements().Single(e => (string?)e.Attribute(x + "Key") == key).Attribute("ResourceKey");
+        Assert.Equal("SystemColorWindowColor", Color("AppIslandBackgroundColor"));
+        Assert.Equal("SystemColorWindowColor", Color("AppIslandChipColor"));
+        Assert.Equal("SystemColorWindowTextColor", Color("AppIslandTextColor"));
+        Assert.Equal("SystemColorHighlightColor", Color("AppIslandChipHoverColor"));
+        Assert.Equal("SystemColorHighlightTextColor", Color("AppOnAccentColor"));
+    }
+
+    [Fact]
     public void Sidebar_collapse_button_can_resolve_its_style_on_startup()
     {
         var directory = Path.Combine(AppContext.BaseDirectory, "StartupXaml");
@@ -416,6 +452,120 @@ public sealed class WorkspacePageResourceTests
         Assert.Contains("用新文件去改名", copyXaml);
         Assert.Contains("用新文件去转换", copyXaml);
         Assert.Contains("新文件加入暂存区", copyXaml);
+
+        // Scheme A Task Queue entry & unified Light/Dark appearance menu
+        var page = XElement.Load(Path.Combine(appRoot, "Features/Workspace/WorkspacePage.xaml"));
+        XNamespace ui = page.Name.Namespace;
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var leftTasksBtn = page.Descendants(ui + "Button").Single(b => (string?)b.Attribute(x + "Name") == "LeftTasksButton");
+        Assert.Equal("{StaticResource LeftRailTaskButtonStyle}", (string?)leftTasksBtn.Attribute("Style"));
+        Assert.Null(leftTasksBtn.Attribute("Background"));
+        Assert.Null(leftTasksBtn.Attribute("BorderBrush"));
+
+        var taskStyle = page.Descendants(ui + "Style").Single(s => (string?)s.Attribute(x + "Key") == "LeftRailTaskButtonStyle");
+        Assert.Contains(taskStyle.Elements(ui + "Setter"), s => (string?)s.Attribute("Property") == "Background" && (string?)s.Attribute("Value") == "Transparent");
+        Assert.Contains(taskStyle.Elements(ui + "Setter"), s => (string?)s.Attribute("Property") == "FontSize" && (string?)s.Attribute("Value") == "13");
+
+        var lightLabel = page.Descendants(ui + "TextBlock").Single(t => (string?)t.Attribute(x + "Name") == "ThemeLightLabel");
+        var darkLabel = page.Descendants(ui + "TextBlock").Single(t => (string?)t.Attribute(x + "Name") == "ThemeCharcoalLabel");
+        XNamespace controlsNs = "using:FileAssistant.App.Controls";
+        Assert.Equal("浅色（沙白画廊）", (string?)lightLabel.Attribute(controlsNs + "WorkspaceLocalization.Text"));
+        Assert.Equal("深色（炭黑微光）", (string?)darkLabel.Attribute(controlsNs + "WorkspaceLocalization.Text"));
+
+        var taskPanelXaml = File.ReadAllText(Path.Combine(appRoot, "Features/Workspace/WorkspaceTaskPanel.xaml"));
+        Assert.Contains("x:Key=\"TaskFilterSegmentStyle\"", taskPanelXaml);
+        Assert.Contains("ClearFinishedCommand", taskPanelXaml);
+        Assert.Contains("打开目录", taskPanelXaml);
+
+        // Global resizable window/dialog grip style, About Markio author credit, and centered TaskCenterDialog
+        var resizeControlsXaml = File.ReadAllText(Path.Combine(appRoot, "Resources/ResizeControls.xaml"));
+        var mainWindowXaml = File.ReadAllText(Path.Combine(appRoot, "MainWindow.xaml"));
+        var aboutCs = File.ReadAllText(Path.Combine(appRoot, "Features/Settings/SettingsDialog.About.cs"));
+        var taskDialogCs = File.ReadAllText(Path.Combine(appRoot, "Features/Workspace/TaskCenterDialog.cs"));
+        var settingsCs = File.ReadAllText(Path.Combine(appRoot, "Features/Settings/SettingsDialog.xaml.cs"));
+        var quickLookCs = File.ReadAllText(Path.Combine(appRoot, "Features/Preview/QuickLookDialog.cs"));
+
+        Assert.Contains("x:Key=\"WorkspaceWindowResizeGripStyle\"", resizeControlsXaml);
+        Assert.Contains("x:Name=\"MainWindowResizeGrip\"", mainWindowXaml);
+        Assert.Contains("作者 Markio", aboutCs);
+        Assert.Contains("Author Markio", aboutCs);
+        Assert.Contains("ResizableDialogShell.Attach", taskDialogCs);
+        Assert.Contains("ResizableDialogShell.Attach", settingsCs);
+        Assert.Contains("ResizableDialogShell.Attach", dialogsCs);
+        Assert.Contains("ResizableDialogShell.Attach", quickLookCs);
+        Assert.DoesNotContain("Transform(WorkbenchSheet, nameof(UIElement.Scale)", workspacePageCs);
+
+        // Unified dialog background token, auto-attached outer resize/move chrome, and TitleBar pin toggle
+        var materialsXaml = File.ReadAllText(Path.Combine(appRoot, "Resources/WorkspaceMaterials.xaml"));
+        var dismissCs = File.ReadAllText(Path.Combine(appRoot, "Controls/DialogDismiss.cs"));
+        var motionCs = File.ReadAllText(Path.Combine(appRoot, "Controls/WorkspaceMotion.cs"));
+        var mainWindowCs = File.ReadAllText(Path.Combine(appRoot, "MainWindow.xaml.cs"));
+        Assert.Contains("x:Key=\"ContentDialogTopOverlay\" ResourceKey=\"WorkspaceDialogBrush\"", materialsXaml);
+        Assert.Contains("x:Key=\"ContentDialogBackground\" ResourceKey=\"WorkspaceDialogBrush\"", materialsXaml);
+        Assert.Contains("ResizableDialogShell.AttachAuto", dismissCs);
+        Assert.Contains("x:Name=\"TitlePinButton\"", workspacePageXaml);
+        Assert.Contains("x:Name=\"TitleSettingsIcon\"", workspacePageXaml);
+        Assert.Contains("x:Key=\"TitleBarChromeToggleStyle\"", controlsXaml);
+
+        // TitleBar 4 icon micro-animations & true circular pixel reveal wave for theme switch
+        Assert.Contains("x:Name=\"ThemeRippleSnapshot\"", mainWindowXaml);
+        Assert.Contains("x:Name=\"RippleRevealHost\"", mainWindowXaml);
+        Assert.Contains("SwitchAppearanceWithRippleAsync", mainWindowCs);
+        Assert.Contains("CreateGeometricClip", mainWindowCs);
+        Assert.Contains("SetOrAnimateRotation", motionCs);
+        Assert.Contains("PlayIconFlip90", motionCs);
+        Assert.Contains("PlayIconSwapSpin", motionCs);
+        Assert.Contains("PlaySpinOnce", motionCs);
+        Assert.Contains("WorkspaceMotion.PlayIconFlip90(NavModeGlyph", workspacePageCs);
+        Assert.Contains("WorkspaceMotion.PlaySpinOnce(TitleSettingsIcon", workspacePageCs);
+        Assert.Contains("SwitchAppearanceWithRippleAsync", workspacePageCs);
+
+        // v1.1 release metadata, update-check UX, and About repository/feedback links
+        var buildProps = File.ReadAllText(Path.Combine(dir!.FullName, "Directory.Build.props"));
+        var appxManifest = File.ReadAllText(Path.Combine(appRoot, "Package.appxmanifest"));
+        var settingsOpsCs = File.ReadAllText(Path.Combine(appRoot, "Features/Settings/SettingsOperations.cs"));
+        Assert.Contains("<Version>1.1.0</Version>", buildProps);
+        Assert.Contains("<Authors>Markio</Authors>", buildProps);
+        Assert.Contains("Version=\"1.1.0.0\"", appxManifest);
+        Assert.Contains("Publisher=\"CN=Markio\"", appxManifest);
+        Assert.Contains("record UpdateCheckResult", settingsOpsCs);
+        Assert.Contains("前往下载 ↗", aboutCs);
+        Assert.Contains("GitHub 仓库 ↗", aboutCs);
+        Assert.Contains("反馈问题 ↗", aboutCs);
+        Assert.Contains("\"Markio520/FileKite\"", settingsOpsCs);
+        Assert.Contains("OpenExternalUriAsync(SettingsOperations.RepositoryUrl)", aboutCs);
+        Assert.Contains("OpenExternalUriAsync(SettingsOperations.IssuesUrl)", aboutCs);
+    }
+
+    [Fact]
+    public void Task_queue_view_model_uses_quiet_idle_label_and_clears_finished_records()
+    {
+        var jobs = new FileAssistant.App.Features.Tasks.ProcessingJobsViewModel();
+        Assert.Equal("任务队列", jobs.CompactLabel);
+        Assert.False(jobs.HasIdleHistory);
+        Assert.False(jobs.HasFinishedJobs);
+
+        var job1 = jobs.Start(() => { }, "格式转换", batch: false);
+        var job2 = jobs.Start(() => { }, "复制与整理", batch: false);
+        job1.Update(new FileAssistant.Core.Engines.ProcessingProgress(5, 8, "转换中"));
+        Assert.Equal("处理中 · 2 项", jobs.CompactLabel);
+        Assert.False(jobs.HasIdleHistory);
+
+        job1.Complete("已完成 8 项", ["a.png：成功"], interrupted: false, outputDirectories: [@"D:\Out"]);
+        Assert.True(job1.HasOutputDirectory);
+        Assert.Equal(@"D:\Out", job1.PrimaryOutputDirectory);
+        Assert.True(jobs.HasFinishedJobs);
+        Assert.Equal("处理中 · 1 项", jobs.CompactLabel);
+
+        // Clearing finished tasks preserves active running tasks
+        jobs.ClearFinishedCommand.Execute(null);
+        Assert.Single(jobs.Items);
+        Assert.Same(job2, jobs.Items[0]);
+
+        job2.Complete("已完成", [], interrupted: false);
+        Assert.Equal("任务队列", jobs.CompactLabel);
+        Assert.True(jobs.HasIdleHistory);
+        Assert.Equal(1, jobs.TotalCount);
     }
 
     private sealed class PlannerNamingService : FileAssistant.Core.Features.CreateOrRename.INamingService

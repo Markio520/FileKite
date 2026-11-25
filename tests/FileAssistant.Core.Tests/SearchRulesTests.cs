@@ -4,6 +4,33 @@ namespace FileAssistant.Core.Tests;
 
 public sealed class SearchRulesTests
 {
+    [Fact]
+    public void Batch_pages_preserve_stable_order_totals_and_nullable_sort_keys()
+    {
+        SearchFile[] sample = [new(@"C:\", true, null, null), new(@"C:\b\one.txt", false, 7, DateTimeOffset.UnixEpoch),
+            new(@"C:\B\ONE.txt", false, 7, null), new(@"C:\a\two.txt", false, 3, null), new(@"C:/a/mixed.txt", false, 3, null)];
+        var files = Enumerable.Range(0, 81).SelectMany(_ => sample).ToArray();
+        foreach (SearchSort sort in Enum.GetValues<SearchSort>())
+        foreach (bool descending in new[] { false, true })
+        {
+            IOrderedEnumerable<SearchFile> Order<T>(Func<SearchFile, T> key, IComparer<T>? comparer = null) => descending
+                ? files.OrderByDescending(key, comparer) : files.OrderBy(key, comparer);
+            var sorted = (sort switch
+            {
+                SearchSort.Name => Order(f => f.Name, StringComparer.OrdinalIgnoreCase),
+                SearchSort.Path => Order(f => f.Directory, StringComparer.OrdinalIgnoreCase),
+                SearchSort.Size => Order(f => f.Size),
+                _ => Order(f => f.Modified)
+            }).ThenBy(f => f.FullPath, StringComparer.OrdinalIgnoreCase).ToArray();
+            foreach (var (offset, size) in new[] { (0, 2), (1, 2), (206, 200), (files.Length - 2, 20), (0, files.Length), (0, 0), (int.MaxValue, 2) })
+            {
+                var page = SearchRules.Filter(files, new() { Sort = sort, Descending = descending, Offset = offset, PageSize = size }, "batch");
+                Assert.Equal(files.Length, page.Total);
+                Assert.Equal(sorted.Skip(offset).Take(size), page.Items);
+            }
+        }
+    }
+
     [Theory]
     [InlineData("hetongbaogao", "合同报告.docx")]
     [InlineData("HTBG", "合同报告.docx")]

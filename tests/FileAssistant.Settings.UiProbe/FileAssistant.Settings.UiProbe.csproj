@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PlatformTarget>x64</PlatformTarget>
+    <AppProject>$(MSBuildProjectDirectory)\..\..\src\FileAssistant.App</AppProject>
+    <ReleaseTree Condition="'$(ReleaseTree)' == ''">codex-settings-v6-20261121</ReleaseTree>
+    <WorkbenchBuild>$(AppProject)\bin\$(ReleaseTree)\x64\Release\$(TargetFramework)\win-x64</WorkbenchBuild>
+    <ApplicationManifest>$(AppProject)\obj\$(ReleaseTree)\x64\Release\$(TargetFramework)\win-x64\Manifests\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="FileAssistant.App;FileAssistant.Core;FileAssistant.Infrastructure;FileAssistant.Indexing;FileAssistant.Indexing.Windows;CommunityToolkit.Mvvm;Microsoft.WinUI;Microsoft.InteractiveExperiences.Projection;WinRT.Runtime">
+      <HintPath>$(WorkbenchBuild)\%(Identity).dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

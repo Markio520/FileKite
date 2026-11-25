@@ -29,10 +29,12 @@ public partial class WorkspaceViewModel
     {
         if (!CanUndo || undoSnapshot is not { } before) return;
         var action = undoAction;
-        collection = FileCollection.Restore(before);
+        var restored = FileCollection.Restore(before);
+        SearchText = string.Empty; FilterIndex = 0;
+        collection = restored;
         CurrentFolderId = collection.HasFolder(before.CurrentFolderId) ? before.CurrentFolderId : Guid.Empty;
         undoSnapshot = null; undoAction = string.Empty;
-        files.Clear(); SearchText = string.Empty; FilterIndex = 0; HasError = false;
+        sampleFiles.Clear(); HasError = false;
         ImportReport = FileImportReport.Empty;
         CollectionChanged(); NotifyUndoState();
         InputFeedback = $"已撤销{action}。原文件位置不变。";

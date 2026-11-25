@@ -37,7 +37,7 @@ var result = await processing.ConvertAsync(plan, progress, cancellationToken);
 | PDFiumCore / PDFium | 157.0.8100 | 首页预览、按页导出图片 |
 | PdfPig | 0.1.16 | 图片/多页 TIFF 生成 PDF、含文字 PDF 提取 UTF-8 文本 |
 
-GIF/WebP 默认保留动画；TIFF 默认全部页，静态单图明确帧/页。SVG 拒绝外部资源；PDF 导出 72–600 DPI。图片合计画布像素受限，预览最多 200 项/256 MiB，转换不读取预览缓存。密码 PDF、文件夹转换、PDF 转可编辑 Office、OCR 和交互式媒体播放未开放。
+最新方向、参数与损失边界见 [支持格式表](../docs/conversion-formats.md)。GIF/WebP 默认保留动画；TIFF 默认全部页，静态单图明确帧/页。SVG 拒绝外部资源；PDF 导出 72–600 DPI。图片合计画布像素受限，预览最多 200 项/256 MiB，转换不读取预览缓存。密码 PDF、文件夹转换、PDF 转可编辑 Office、OCR 和交互式媒体播放未开放。
 
 音轨序号可选，默认 1；计划探测并标注总数、编码与标签。无音轨提取及越界选择会拒绝。MP3 使用 libmp3lame，WAV 为 16 位 PCM，FLAC 为无损，M4A/AAC 使用 AAC，OGG 使用固定质量 5 的 Vorbis。MP4/MKV/MOV 使用 libopenh264 + AAC，WebM 使用 VP9 + Opus；视频只保留首个非封面视频流和所选音轨，舍弃字幕、其他轨道和原元数据。转换后复核原件，临时结果完成后原子提交。
 

@@ -55,7 +55,7 @@
     <Compile Include="../../src/FileAssistant.App/Features/Tasks/ProcessingJobsViewModel.cs" Link="Sources/ProcessingJobsViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="../../src/FileAssistant.App/App.xaml;../../src/FileAssistant.App/Features/Workspace/WorkspacePage.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingOptionsView.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingCreationPreviewView.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingDirectoryTreeView.xaml;../../src/FileAssistant.App/Features/Convert/ConversionOptionsView.xaml;../../src/FileAssistant.App/Features/FileInput/FileInputView.xaml"
+    <None Include="../../src/FileAssistant.App/App.xaml;../../src/FileAssistant.App/Features/Workspace/WorkspacePage.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingOptionsView.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingCreationPreviewView.xaml;../../src/FileAssistant.App/Features/CreateOrRename/NamingDirectoryTreeView.xaml;../../src/FileAssistant.App/Features/Convert/ConversionOptionsView.xaml;../../src/FileAssistant.App/Features/FileInput/FileInputView.xaml;../../src/FileAssistant.App/Features/Outputs/OutputsView.xaml"
           Link="StartupXaml/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../src/FileAssistant.App/Resources/*.xaml"
           Link="StartupXaml/Resources/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />

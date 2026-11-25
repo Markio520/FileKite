@@ -5,91 +5,172 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:FileAssistant.App.Controls"
     xmlns:tasks="using:FileAssistant.App.Features.Tasks">
-    <Grid Background="{ThemeResource WorkspaceSurfaceBrush}" CornerRadius="10">
+    <UserControl.Resources>
+        <Style x:Key="TaskFilterSegmentStyle" TargetType="ToggleButton">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="SegRoot" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal" />
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="SegRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                            <Setter Target="SegContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="SegRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                            <Setter Target="SegContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Checked">
+                                        <VisualState.Setters>
+                                            <Setter Target="SegRoot.Background" Value="{ThemeResource WorkspaceCardBrush}" />
+                                            <Setter Target="SegRoot.BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+                                            <Setter Target="SegContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                            <Setter Target="SegContent.FontWeight" Value="SemiBold" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="CheckedPointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="SegRoot.Background" Value="{ThemeResource WorkspaceCardBrush}" />
+                                            <Setter Target="SegRoot.BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+                                            <Setter Target="SegContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                            <Setter Target="SegContent.FontWeight" Value="SemiBold" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="CheckedPressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="SegRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                            <Setter Target="SegContent.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                            <Setter Target="SegContent.FontWeight" Value="SemiBold" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters><Setter Target="SegRoot.Opacity" Value="0.45" /></VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="SegContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Foreground="{TemplateBinding Foreground}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid x:Name="PanelRootGrid" Background="{ThemeResource WorkspaceSurfaceBrush}" CornerRadius="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition x:Name="TaskStreamRow" Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="12" Padding="16,12" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,0,0,1">
+        <!-- Compact Header Row -->
+        <Grid x:Name="HeaderRow" ColumnSpacing="8" Padding="14,10" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,0,0,1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Spacing="2" VerticalAlignment="Center">
-                <TextBlock controls:WorkspaceLocalization.Text="任务队列" FontSize="15" FontWeight="SemiBold" />
+            <StackPanel Spacing="1" VerticalAlignment="Center">
+                <TextBlock x:Name="TitleText" controls:WorkspaceLocalization.Text="任务队列" FontSize="14" FontWeight="SemiBold" />
                 <TextBlock controls:WorkspaceLocalization.Text="{x:Bind Jobs.Summary, Mode=OneWay}" Visibility="{x:Bind Jobs.HasItems, Mode=OneWay}" Style="{StaticResource WorkspaceCaptionStyle}" TextWrapping="Wrap" />
             </StackPanel>
-            <Button Grid.Column="1" Style="{StaticResource WorkspaceIconButtonStyle}" Click="Close_Click" controls:WorkspaceLocalization.Name="关闭任务队列" controls:WorkspaceLocalization.Tip="关闭任务队列">
-                <FontIcon Glyph="&#xE711;" FontSize="13" />
+            <Button Grid.Column="1" controls:WorkspaceLocalization.Content="清空记录" Command="{x:Bind Jobs.ClearFinishedCommand}" Visibility="{x:Bind Jobs.HasFinishedJobs, Mode=OneWay}" Style="{StaticResource WorkspaceToolbarButtonStyle}" MinHeight="26" Padding="9,3" FontSize="12" VerticalAlignment="Center" />
+            <Button Grid.Column="2" Style="{StaticResource WorkspaceIconButtonStyle}" Width="28" Height="28" Click="Close_Click" controls:WorkspaceLocalization.Name="关闭任务队列" controls:WorkspaceLocalization.Tip="关闭任务队列">
+                <FontIcon Glyph="&#xE711;" FontSize="12" />
             </Button>
         </Grid>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="124" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <!-- Single-Row Segmented Filter Pills -->
+        <Border x:Name="FilterBarBorder" Grid.Row="1" Margin="12,10,12,0" Padding="3" CornerRadius="8" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1">
+            <Grid ColumnSpacing="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ToggleButton x:Name="AllTasks" Tag="all" controls:WorkspaceLocalization.Content="全部任务" Style="{StaticResource TaskFilterSegmentStyle}" Click="Filter_Click" IsChecked="True" />
+                <ToggleButton x:Name="RunningTasks" Grid.Column="1" Tag="running" controls:WorkspaceLocalization.Content="进行中" Style="{StaticResource TaskFilterSegmentStyle}" Click="Filter_Click" IsChecked="False" />
+                <ToggleButton x:Name="FinishedTasks" Grid.Column="2" Tag="finished" controls:WorkspaceLocalization.Content="已结束" Style="{StaticResource TaskFilterSegmentStyle}" Click="Filter_Click" IsChecked="False" />
+            </Grid>
+        </Border>
 
-            <StackPanel Spacing="3" Padding="8,12" Background="{ThemeResource WorkspacePaneBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,0,1,0">
-                <ToggleButton x:Name="AllTasks" Tag="all" controls:WorkspaceLocalization.Content="全部任务" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Filter_Click" IsChecked="True" />
-                <ToggleButton x:Name="RunningTasks" Tag="running" controls:WorkspaceLocalization.Content="进行中" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Filter_Click" IsChecked="False" />
-                <ToggleButton x:Name="FinishedTasks" Tag="finished" controls:WorkspaceLocalization.Content="已结束" Style="{StaticResource WorkspaceLeftNavItemStyle}" Click="Filter_Click" IsChecked="False" />
-            </StackPanel>
-
-            <Grid Grid.Column="1" Padding="14,12">
-                <Grid Visibility="{x:Bind Jobs.IsEmpty, Mode=OneWay}">
-                    <StackPanel Spacing="10" Padding="8,20" HorizontalAlignment="Center" Visibility="{x:Bind ViewModel.ShowEmptyQueue, Mode=OneWay}">
-                        <Grid Width="46" Height="46" HorizontalAlignment="Center">
-                            <Border Width="38" Height="38" CornerRadius="10" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Border.RenderTransform><RotateTransform Angle="-8" CenterX="19" CenterY="19" /></Border.RenderTransform>
-                            </Border>
-                            <Border Width="38" Height="38" CornerRadius="10" Background="{ThemeResource WorkspaceCardBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <FontIcon Glyph="&#xE9D9;" FontSize="15" Foreground="{ThemeResource WorkspaceAccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                        <TextBlock controls:WorkspaceLocalization.Text="还没有进行中的任务" Style="{StaticResource WorkspaceSectionStyle}" HorizontalAlignment="Center" />
-                        <TextBlock controls:WorkspaceLocalization.Text="开始转换、改名、复制或清理后，可在这里实时查看进度和处理明细。" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="300" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
-                    </StackPanel>
-                    <Border Style="{StaticResource WorkspaceBentoCardStyle}" Visibility="{x:Bind ViewModel.IsTaskExample, Mode=OneWay}">
-                        <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Spacing="8">
-                                <Grid><TextBlock controls:WorkspaceLocalization.Text="复制到交付目录" FontWeight="SemiBold" /><TextBlock Text="62%" HorizontalAlignment="Right" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" /></Grid>
-                                <ProgressBar Value="62" Maximum="100" Foreground="{ThemeResource WorkspaceAccentBrush}" controls:WorkspaceLocalization.Name="示例进度 62%，未执行文件操作" />
-                                <TextBlock controls:WorkspaceLocalization.Text="进度示例 · 5 / 8 项 · 未执行文件操作" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
-                            </StackPanel>
-                            <Button Grid.Column="1" controls:WorkspaceLocalization.Content="关闭示例" VerticalAlignment="Center" Command="{x:Bind ViewModel.CloseTaskExampleCommand}" />
-                        </Grid>
+        <!-- Single-Column Task Stream -->
+        <Grid x:Name="StreamContainer" Grid.Row="2" Padding="12,10,12,12">
+            <Grid Visibility="{x:Bind Jobs.IsEmpty, Mode=OneWay}" VerticalAlignment="Center">
+                <StackPanel Spacing="8" Padding="8,18" HorizontalAlignment="Center" Visibility="{x:Bind ViewModel.ShowEmptyQueue, Mode=OneWay}">
+                    <Border Width="36" Height="36" CornerRadius="9" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="1" HorizontalAlignment="Center">
+                        <FontIcon Glyph="&#xE9D5;" FontSize="15" Foreground="{ThemeResource WorkspaceSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                </Grid>
+                    <TextBlock controls:WorkspaceLocalization.Text="还没有进行中的任务" Style="{StaticResource WorkspaceSectionStyle}" FontSize="13.5" HorizontalAlignment="Center" />
+                    <TextBlock controls:WorkspaceLocalization.Text="开始转换、改名、复制或清理后，可在这里实时查看进度和处理明细。" FontSize="12" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="280" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                </StackPanel>
+                <Border Style="{StaticResource WorkspaceBentoCardStyle}" Visibility="{x:Bind ViewModel.IsTaskExample, Mode=OneWay}">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel Spacing="6">
+                            <Grid><TextBlock controls:WorkspaceLocalization.Text="复制到交付目录" FontWeight="SemiBold" FontSize="12.5" /><TextBlock Text="62%" HorizontalAlignment="Right" FontSize="12" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceAccentBrush}" /></Grid>
+                            <ProgressBar Value="62" Maximum="100" Foreground="{ThemeResource WorkspaceAccentBrush}" controls:WorkspaceLocalization.Name="示例进度 62%，未执行文件操作" />
+                            <TextBlock controls:WorkspaceLocalization.Text="进度示例 · 5 / 8 项 · 未执行文件操作" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1" controls:WorkspaceLocalization.Content="关闭示例" VerticalAlignment="Center" FontSize="12" Padding="9,4" Command="{x:Bind ViewModel.CloseTaskExampleCommand}" />
+                    </Grid>
+                </Border>
+            </Grid>
 
-                <ListView x:Name="QueueList" Visibility="{x:Bind Jobs.HasItems, Mode=OneWay}" MaxHeight="360" SelectionMode="None" HorizontalContentAlignment="Stretch">
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                            <Setter Property="Padding" Value="0" />
-                            <Setter Property="Margin" Value="0,0,0,8" />
-                            <Setter Property="MinHeight" Value="0" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="tasks:ProcessingJob">
-                            <Border Style="{StaticResource WorkspaceBentoCardStyle}">
-                                <StackPanel Spacing="8">
-                                    <Grid ColumnSpacing="12">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                        <StackPanel Spacing="3">
-                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="13" />
-                                            <TextBlock controls:WorkspaceLocalization.Text="{x:Bind Status, Mode=OneWay}" TextWrapping="Wrap" Style="{StaticResource WorkspaceCaptionStyle}" />
-                                        </StackPanel>
-                                        <Button Grid.Column="1" controls:WorkspaceLocalization.Content="取消" Command="{x:Bind CancelCommand}" Visibility="{x:Bind IsRunning, Mode=OneWay}" VerticalAlignment="Center" FontSize="12" Padding="10,4" />
+            <ListView x:Name="QueueList" Visibility="{x:Bind Jobs.HasItems, Mode=OneWay}" MaxHeight="340" SelectionMode="None" HorizontalContentAlignment="Stretch">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0,0,0,7" />
+                        <Setter Property="MinHeight" Value="0" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="tasks:ProcessingJob">
+                        <Border Style="{StaticResource WorkspaceBentoCardStyle}" Padding="11,9">
+                            <StackPanel Spacing="7">
+                                <Grid ColumnSpacing="9">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="16" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid VerticalAlignment="Top" Margin="0,2,0,0">
+                                        <ProgressRing Width="15" Height="15" IsIndeterminate="False" Value="{x:Bind Progress, Mode=OneWay}" Visibility="{x:Bind IsRunning, Mode=OneWay}" Foreground="{ThemeResource WorkspaceAccentBrush}" />
+                                        <FontIcon Glyph="&#xE73E;" FontSize="13.5" Visibility="{x:Bind IsCompletedSuccess, Mode=OneWay}" Foreground="{ThemeResource WorkspaceSuccessBrush}" />
+                                        <FontIcon Glyph="&#xE946;" FontSize="13.5" Visibility="{x:Bind IsCompletedInterrupted, Mode=OneWay}" Foreground="{ThemeResource WorkspaceSecondaryBrush}" />
                                     </Grid>
-                                    <ProgressBar Value="{x:Bind Progress, Mode=OneWay}" Maximum="100" Foreground="{ThemeResource WorkspaceAccentBrush}" Visibility="{x:Bind IsRunning, Mode=OneWay}" />
-                                    <Button controls:WorkspaceLocalization.Content="处理明细" HorizontalAlignment="Left" FontSize="12" Padding="10,4">
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock controls:WorkspaceLocalization.Text="{x:Bind Status, Mode=OneWay}" TextWrapping="Wrap" Style="{StaticResource WorkspaceCaptionStyle}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="2" controls:WorkspaceLocalization.Content="取消" Command="{x:Bind CancelCommand}" Visibility="{x:Bind IsRunning, Mode=OneWay}" VerticalAlignment="Top" FontSize="12" Padding="9,3" MinHeight="26" />
+                                </Grid>
+                                <ProgressBar Value="{x:Bind Progress, Mode=OneWay}" Maximum="100" Foreground="{ThemeResource WorkspaceAccentBrush}" Visibility="{x:Bind IsRunning, Mode=OneWay}" />
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Button controls:WorkspaceLocalization.Content="打开目录" Tag="{x:Bind PrimaryOutputDirectory, Mode=OneWay}" Visibility="{x:Bind HasOutputDirectory, Mode=OneWay}" Click="OpenFolder_Click" FontSize="12" Padding="9,3" MinHeight="26" />
+                                    <Button controls:WorkspaceLocalization.Content="处理明细" Visibility="{x:Bind HasDetails, Mode=OneWay}" FontSize="12" Padding="9,3" MinHeight="26">
                                         <Button.Flyout>
-                                            <Flyout Placement="Bottom">
-                                                <ListView ItemsSource="{x:Bind Details}" MaxHeight="300" SelectionMode="None" Width="420">
+                                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                                <ListView ItemsSource="{x:Bind Details}" MaxHeight="260" SelectionMode="None" Width="340">
                                                     <ListView.ItemTemplate>
                                                         <DataTemplate>
                                                             <TextBlock Text="{Binding}" TextWrapping="Wrap" IsTextSelectionEnabled="True" FontSize="12" />
@@ -100,13 +181,13 @@
                                         </Button.Flyout>
                                     </Button>
                                 </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-                <TextBlock x:Name="EmptyFilter" controls:WorkspaceLocalization.Text="此分类暂无任务" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource WorkspaceCaptionStyle}" />
-            </Grid>
+            <TextBlock x:Name="EmptyFilter" controls:WorkspaceLocalization.Text="此分类暂无任务" Padding="0,24" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource WorkspaceCaptionStyle}" />
         </Grid>
     </Grid>
 </UserControl>

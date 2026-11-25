@@ -37,6 +37,9 @@ public partial class WorkspaceViewModel
     public IReadOnlyList<Guid> SelectedEntryIds => selectedFiles.Where(file => file.EntryId is not null).Select(file => file.EntryId!.Value).ToArray();
     private IReadOnlyList<SearchFile>? allEntries;
     private IReadOnlyList<SearchFile>? folderEntries;
+    private IReadOnlyDictionary<Guid, (int Count, long Bytes)>? folderTotals;
+    private Dictionary<Guid, WorkspaceFile> renderedRows = [];
+    private IReadOnlyDictionary<Guid, (int Count, long Bytes)> FolderTotals => folderTotals ??= collection.FolderTotals();
     private Guid cachedFolder;
     private IReadOnlyList<SearchFile> ResolveFiles(Guid folder) =>
         Array.AsReadOnly(collection.Resolve(folder).Select(entry => entry.File).ToArray());
@@ -64,7 +67,7 @@ public partial class WorkspaceViewModel
         {
             var result = new List<FolderNavigationItem> { new(Guid.Empty, AllFilesLabel, TotalReferenceCount, Guid.Empty) };
             result.AddRange(collection.Folders.Select(folder => new FolderNavigationItem(
-                folder.Id, folder.Name, collection.Resolve(folder.Id).Count, folder.ParentId)));
+                folder.Id, folder.Name, FolderTotals[folder.Id].Count, folder.ParentId)));
             return result;
         }
     }
@@ -101,8 +104,8 @@ public partial class WorkspaceViewModel
     }
     private WorkspaceFile FolderRow(CollectionFolder folder)
     {
-        var children = collection.Resolve(folder.Id);
-        return new(folder.Name, $"软件文件夹 · {children.Count:N0} 项", children.Sum(entry => entry.File.Size ?? 0),
+        var totals = FolderTotals[folder.Id];
+        return new(folder.Name, $"软件文件夹 · {totals.Count:N0} 项", totals.Bytes,
             Title + (folder.ParentId == Guid.Empty ? "" : " / " + collection.FolderPath(folder.ParentId)), "—", "\uE8B7", 8,
             FolderId: folder.Id);
     }
@@ -111,29 +114,51 @@ public partial class WorkspaceViewModel
         var selected = ids.ToHashSet();
         return collection.Folders.Where(folder => selected.Contains(folder.Id)).Select(FolderRow).ToArray();
     }
-    private IEnumerable<WorkspaceFile> CurrentRows()
+    private IEnumerable<WorkspaceFile> FilteredRows(string query, CompiledSearch typeFilter)
     {
-        if (HasSamples) return files;
-        var folders = collection.Folders.Where(folder => folder.ParentId == CurrentFolderId).Select(FolderRow);
-        if (string.IsNullOrWhiteSpace(SearchText))
-            return folders.Concat(files.Where(row => row.OwnerFolderId == CurrentFolderId));
-        if (CurrentFolderId == Guid.Empty) return folders.Concat(files);
-        var scope = collection.Descendants(CurrentFolderId);
-        return folders.Concat(files.Where(row => scope.Contains(row.OwnerFolderId)));
+        bool TextMatches(string name, string directory) => query.Length == 0 ||
+            name.Contains(query, StringComparison.OrdinalIgnoreCase) || directory.Contains(query, StringComparison.OrdinalIgnoreCase);
+        if (HasSamples)
+        {
+            foreach (var row in sampleFiles)
+            {
+                currentRowCount++;
+                if (TextMatches(row.Name, row.Directory) && (FilterIndex == (int)SearchKind.All || typeFilter.Matches(new(row.FullPath, false, row.Size, null))))
+                    yield return row;
+            }
+            yield break;
+        }
+        foreach (var folder in collection.Folders)
+        {
+            if (folder.ParentId != CurrentFolderId) continue;
+            currentRowCount++;
+            if (FilterIndex is not ((int)SearchKind.All or (int)SearchKind.Folders)) continue;
+            var row = FolderRow(folder);
+            if (TextMatches(row.Name, row.Directory)) yield return row;
+        }
+        var subtree = query.Length != 0 && CurrentFolderId != Guid.Empty ? collection.Descendants(CurrentFolderId) : null;
+        foreach (var entry in collection.Entries)
+        {
+            if ((query.Length == 0 && entry.FolderId != CurrentFolderId) || (subtree != null && !subtree.Contains(entry.FolderId))) continue;
+            currentRowCount++;
+            if (query.Length != 0 && !entry.File.Name.Contains(query, StringComparison.OrdinalIgnoreCase) &&
+                !entry.File.Directory.Contains(query, StringComparison.OrdinalIgnoreCase)) continue;
+            if (FilterIndex != (int)SearchKind.All && !typeFilter.Matches(entry.File)) continue;
+            if (!renderedRows.TryGetValue(entry.Id, out var row)) renderedRows.Add(entry.Id, row = EntryRow(entry));
+            yield return row;
+        }
     }
     private bool HasCurrentItems => currentRowCount > 0;
     private void CollectionChanged(bool persist = true, bool entriesChanged = true)
     {
         if (!collection.HasFolder(CurrentFolderId)) CurrentFolderId = Guid.Empty;
+        renderedRows = [];
         if (entriesChanged)
         {
             allEntries = null;
             folderEntries = null;
-            if (!HasSamples || collection.Entries.Count > 0 || collection.Folders.Count > 0)
-            {
-                files.Clear();
-                files.AddRange(collection.Entries.Select(EntryRow));
-            }
+            folderTotals = null;
+            if (collection.Entries.Count > 0 || collection.Folders.Count > 0) sampleFiles.Clear();
         }
         CollectionRevision++;
         ApplyFilters();
@@ -147,7 +172,7 @@ public partial class WorkspaceViewModel
         var before = CollectionSnapshot;
         var id = collection.CreateFolder(parent ?? CurrentFolderId, name);
         RememberChange(before, "新建文件夹");
-        files.RemoveAll(file => file.IsSample); CollectionChanged(); return id;
+        sampleFiles.Clear(); CollectionChanged(); return id;
     }
     public void RenameFolder(Guid id, string name) { var before = CollectionSnapshot; collection.RenameFolder(id, name); RememberChange(before, "重命名文件夹"); CollectionChanged(); }
     public void DissolveFolder(Guid id) { var before = CollectionSnapshot; collection.Dissolve(id); RememberChange(before, "解散文件夹"); CollectionChanged(); }
@@ -182,7 +207,7 @@ public partial class WorkspaceViewModel
         collection = FileCollection.Restore(snapshot);
         undoSnapshot = null; undoAction = string.Empty; NotifyUndoState();
         CurrentFolderId = collection.HasFolder(snapshot.CurrentFolderId) ? snapshot.CurrentFolderId : Guid.Empty;
-        files.Clear(); CollectionChanged(persist: false);
+        sampleFiles.Clear(); CollectionChanged(persist: false);
     }
     public async Task<FileImportReport> ImportBundleAsync(FileCollectionBundle bundle, Guid destination, bool preserveFolders)
     {
@@ -215,7 +240,7 @@ public partial class WorkspaceViewModel
             if (items.Any(item => item.Status is FileImportStatus.Unavailable or FileImportStatus.Unsupported)) summary += $" · 失效或不支持 {items.Count(item => item.Status is FileImportStatus.Unavailable or FileImportStatus.Unsupported):N0} 项";
             ImportReport = new(items, summary);
             InputFeedback = ImportReport.Summary;
-            CurrentFolderId = destination; files.RemoveAll(file => file.IsSample); CollectionChanged();
+            CurrentFolderId = destination; sampleFiles.Clear(); CollectionChanged();
             return ImportReport;
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { return new([], "已取消转交，原列表保留。"); }

@@ -84,5 +84,11 @@ public partial class OutputsViewModel(IFileInteraction interaction) : Observable
     [RelayCommand] private void CopyPath() => Interact(() => { if (selection.Count > 0) interaction.CopyText(string.Join(Environment.NewLine, selection.Select(item => item.FullPath))); });
     private void Interact(Action action) { try { action(); } catch (FileInteractionException error) { Feedback = error.Message; } }
     [RelayCommand] private void ClearRecords()
-    { entries.Clear(); TaskId = 0; Tasks.Clear(); Tasks.Add(new(0, "全部任务")); Refresh(); Feedback = "已清空输出记录，磁盘文件保留。"; }
+    {
+        entries.Clear();
+        TaskId = 0;
+        while (Tasks.Count > 1) Tasks.RemoveAt(Tasks.Count - 1);
+        Refresh();
+        Feedback = "已清空输出记录，磁盘文件保留。";
+    }
 }

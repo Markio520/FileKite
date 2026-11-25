@@ -17,6 +17,13 @@ public sealed partial class OutputsView : UserControl
     private void ToggleDetails_Click(object sender, RoutedEventArgs e) => DetailsHost.IsPaneOpen = !DetailsHost.IsPaneOpen;
     private void ToggleSources_Click(object sender, RoutedEventArgs e) => SourcesHost.IsPaneOpen = !SourcesHost.IsPaneOpen;
     private void Query_TextChanged(object sender, TextChangedEventArgs e) => ViewModel.SearchText = Query.Text;
+    private void SourceTask_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var list = (ListView)sender;
+        if (list.SelectedItem is SelectionOption source) ViewModel.TaskId = source.Value;
+        else if (list.Items.Count > 0) list.SelectedIndex = 0;
+    }
+
     private void Files_SelectionChanged(object sender, SelectionChangedEventArgs e)
     { if (!MarqueeSelection.GetIsSelecting(Files)) UpdateFileSelection(); }
     private void Files_MarqueeCommitted(object? sender, EventArgs e) => UpdateFileSelection();

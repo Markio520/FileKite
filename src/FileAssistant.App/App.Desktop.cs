@@ -144,14 +144,20 @@ public partial class App
         var s = Preferences.Current;
         var old = initial ? null : applied;
         applied = s;
-        FileDisplay.Configure(s);
-        Appearance.Apply(s);
+        if (initial || old!.Units != s.Units || old.ShowExtensions != s.ShowExtensions)
+            FileDisplay.Configure(s);
+        if (initial || old!.Mode != s.Mode || old.TopNavigation != s.TopNavigation)
+            Appearance.Apply(s);
         Jobs.ApplyDefaults(old, s);
         Conversion.ApplyDefaults(old, s); Copy.ApplyDefaults(old, s);
         Naming.ApplyDefaults(old, s); Cleanup.ApplyDefaults(old, s);
         Search.LoadIndexOnDemand = !s.PrewarmIndex;
-        Search.ApplyPreferences();
-        Space.ApplyPreferences();
+        if (initial || old!.PinyinSearch != s.PinyinSearch || old.ShowHidden != s.ShowHidden
+            || old.ContentLimitMB != s.ContentLimitMB || old.PrewarmIndex != s.PrewarmIndex
+            || !old.ExcludedDirectories.SequenceEqual(s.ExcludedDirectories, StringComparer.OrdinalIgnoreCase))
+            Search.ApplyPreferences();
+        if (initial || old!.LogicalSpaceSize != s.LogicalSpaceSize)
+            Space.ApplyPreferences();
         if (initial) return;
         if (old!.PrewarmIndex != s.PrewarmIndex && s.PrewarmIndex) indexWarmup = WarmIndexAsync();
         if (old.IndexedVolumes != s.IndexedVolumes && indexRuntime is not null) _ = UpdateVolumesAsync();

@@ -10,8 +10,10 @@ using FileAssistant.App.Controls;
 using FileAssistant.App.Features.FileInput;
 using FileAssistant.App.Features.Settings;
 using FileAssistant.App.Features.SpaceAnalysis;
+using FileAssistant.App.Resources;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -46,6 +48,10 @@ public sealed partial class WorkspacePage : Page
     private readonly DispatcherQueueTimer navTransitionTimer;
     private readonly DispatcherQueueTimer indicatorTimer;
     private readonly DispatcherQueueTimer taskDoneResetTimer;
+    private readonly DispatcherQueueTimer taskHoverOpenTimer;
+    private readonly DispatcherQueueTimer taskHoverCloseTimer;
+    private bool isPointerOverTaskTrigger;
+    private bool isPointerOverTaskFlyout;
     private Action<double>? activeTransitionStep;
     private Action? activeTransitionComplete;
     private long transitionStartTicks;
@@ -64,7 +70,9 @@ public sealed partial class WorkspacePage : Page
     private int lastStagingCount;
     private int lastOutputsCount;
     private bool wasRunningJobs;
+    private bool isShowingTaskDone;
     private UIElement? hoveredDropNav;
+    private Point? lastThemeClickOrigin;
 
     public WorkspacePage()
     {
@@ -87,9 +95,61 @@ public sealed partial class WorkspacePage : Page
         taskDoneResetTimer.IsRepeating = false;
         taskDoneResetTimer.Tick += (_, _) => ResetTaskIdleIcons();
 
+        taskHoverOpenTimer = DispatcherQueue.CreateTimer();
+        taskHoverOpenTimer.Interval = TimeSpan.FromMilliseconds(115);
+        taskHoverOpenTimer.IsRepeating = false;
+        taskHoverOpenTimer.Tick += (_, _) =>
+        {
+            if (isPointerOverTaskTrigger && !TaskCenterDialog.IsOpen && !SettingsDialog.IsOpen)
+                ViewModel.IsQueueExpanded = true;
+        };
+
+        taskHoverCloseTimer = DispatcherQueue.CreateTimer();
+        taskHoverCloseTimer.Interval = TimeSpan.FromMilliseconds(240);
+        taskHoverCloseTimer.IsRepeating = false;
+        taskHoverCloseTimer.Tick += (_, _) =>
+        {
+            if (isPointerOverTaskTrigger || isPointerOverTaskFlyout) return;
+            if (HasNestedFlyoutOpenAboveTaskQueue())
+            {
+                taskHoverCloseTimer.Start();
+                return;
+            }
+            ViewModel.IsQueueExpanded = false;
+        };
+
+        foreach (var trigger in new UIElement[] { LeftTasksButton, TopTasksButton })
+        {
+            trigger.PointerEntered += (_, _) =>
+            {
+                isPointerOverTaskTrigger = true;
+                taskHoverCloseTimer.Stop();
+                if (!ViewModel.IsQueueExpanded && !TaskCenterDialog.IsOpen && !SettingsDialog.IsOpen)
+                    taskHoverOpenTimer.Start();
+            };
+            trigger.PointerExited += (_, _) =>
+            {
+                isPointerOverTaskTrigger = false;
+                taskHoverOpenTimer.Stop();
+                if (ViewModel.IsQueueExpanded) taskHoverCloseTimer.Start();
+            };
+        }
+        TaskQueueScroll.PointerEntered += (_, _) => { isPointerOverTaskFlyout = true; taskHoverCloseTimer.Stop(); };
+        TaskQueueScroll.PointerExited += (_, _) => { isPointerOverTaskFlyout = false; if (ViewModel.IsQueueExpanded) taskHoverCloseTimer.Start(); };
+
         foreach (var btn in AllNavigationButtons) WorkspaceMotion.AttachTactilePress(btn, 0.968f);
-        foreach (var chrome in new UIElement[] { NavModeToggleButton, TitleAppearanceButton, TitleSettingsButton, LeftTasksButton, TopTasksButton })
+        foreach (var chrome in new UIElement[] { TitlePinButton, NavModeToggleButton, TitleAppearanceButton, TitleSettingsButton, LeftTasksButton, TopTasksButton })
             WorkspaceMotion.AttachTactilePress(chrome, 0.94f);
+        foreach (var themeOption in new UIElement[] { ThemeLightItem, ThemeCharcoalItem, ThemeSystemItem })
+        {
+            themeOption.AddHandler(UIElement.PointerPressedEvent, new PointerEventHandler((_, args) =>
+            {
+                if (App.Window?.Content is UIElement root)
+                {
+                    try { lastThemeClickOrigin = args.GetCurrentPoint(root).Position; } catch (Exception) { }
+                }
+            }), handledEventsToo: true);
+        }
 
         Loaded += (_, _) =>
         {
@@ -113,6 +173,8 @@ public sealed partial class WorkspacePage : Page
                 NavigateTo(s.StartupModule == "last" ? s.LastModule : s.StartupModule);
             }
             UpdateAppearanceGlyph();
+            ApplyAlwaysOnTop(App.Preferences.Current.AlwaysOnTop);
+            UpdateTaskTriggerVisuals();
             UpdateNavigationLayout(animate: false);
             WorkspaceMotion.AlignSingleLineInputs(StagingPanel);
             DispatcherQueue.TryEnqueue(() => UpdateSlidingIndicators(animate: false));
@@ -124,6 +186,8 @@ public sealed partial class WorkspacePage : Page
             StopModeMotion();
             indicatorTimer.Stop();
             taskDoneResetTimer.Stop();
+            taskHoverOpenTimer.Stop();
+            taskHoverCloseTimer.Stop();
             ViewModel.PropertyChanged -= QueueStateChanged;
             Outputs.PropertyChanged -= OutputsChanged;
             Jobs.PropertyChanged -= JobsChanged;
@@ -134,9 +198,12 @@ public sealed partial class WorkspacePage : Page
         };
         ActualThemeChanged += (_, _) =>
         {
-            UpdateAppearanceGlyph();
+            UpdateAppearanceGlyph(animate: IsLoaded);
+            ApplyAlwaysOnTop(App.Preferences.Current.AlwaysOnTop, animate: false);
+            UpdateTaskTriggerVisuals();
             UpdateQueueLayout();
         };
+        LeftNavigationScroll.ViewChanged += (_, _) => UpdateSlidingIndicators(animate: false);
         SizeChanged += (_, _) =>
         {
             UpdateQueueLayout();
@@ -244,7 +311,7 @@ public sealed partial class WorkspacePage : Page
     private void UpdateSlidingIndicators(bool animate)
     {
         if (!IsLoaded) return;
-        var leftTarget = new[] { LeftWorkspaceNav, LeftSearchNav, LeftConversionNav, LeftNamingNav, LeftCopyNav, LeftSpaceNav, LeftCleanupNav }
+        var leftTarget = new[] { LeftWorkspaceNav, LeftSearchNav, LeftConversionNav, LeftNamingNav, LeftCopyNav, LeftSpaceNav, LeftCleanupNav, LeftOutputsNav }
             .FirstOrDefault(b => Equals(b.Tag, currentPage));
         var topTarget = new[] { TopWorkspaceNav, TopSearchNav, TopConversionNav, TopNamingNav, TopCopyNav, TopSpaceNav, TopCleanupNav }
             .FirstOrDefault(b => Equals(b.Tag, currentPage));
@@ -255,8 +322,10 @@ public sealed partial class WorkspacePage : Page
         var nextLeftY = toLeftIndicatorY;
         if (leftTarget is not null && leftTarget.ActualHeight > 0)
         {
-            var pt = leftTarget.TransformToVisual(LeftMainNavigation).TransformPoint(new Point(0, 0));
+            var pt = leftTarget.TransformToVisual(LeftIndicatorLayer).TransformPoint(new Point(0, 0));
             nextLeftY = pt.Y + (leftTarget.ActualHeight - LeftSlidingPill.Height) * 0.5;
+            if (leftTarget != LeftOutputsNav && (nextLeftY < 0 || nextLeftY + LeftSlidingPill.Height > LeftNavigationScroll.ActualHeight))
+                LeftSlidingPill.Opacity = 0;
         }
 
         var nextTopX = toTopIndicatorX;
@@ -305,27 +374,74 @@ public sealed partial class WorkspacePage : Page
         }
     }
 
-    private void UpdateAppearanceGlyph()
+    private void UpdateAppearanceGlyph(bool animate = false)
     {
         if (TitleAppearanceIcon is null) return;
-        TitleAppearanceIcon.Glyph = ActualTheme == ElementTheme.Light ? "\uE706" : "\uE708";
+        var nextGlyph = ActualTheme == ElementTheme.Light ? "\uE706" : "\uE708";
+        var changed = !string.Equals(TitleAppearanceIcon.Glyph, nextGlyph, StringComparison.Ordinal);
+        TitleAppearanceIcon.Glyph = nextGlyph;
+        if (animate && changed) WorkspaceMotion.PlayIconSwapSpin(TitleAppearanceIcon);
+    }
+
+    internal void ApplyAlwaysOnTop(bool pinned, bool animate = false)
+    {
+        if (TitlePinButton is null || TitlePinIcon is null) return;
+        TitlePinButton.IsChecked = pinned;
+        TitlePinIcon.Glyph = pinned ? "\uE840" : "\uE718";
+        WorkspaceMotion.SetOrAnimateRotation(TitlePinIcon, pinned ? -45f : 0f, animate);
+        var label = pinned ? "取消固定窗口（当前已置顶）" : "固定窗口（置顶显示）";
+        Controls.WorkspaceLocalization.SetName(TitlePinButton, label);
+        Controls.WorkspaceLocalization.SetTip(TitlePinButton, label);
+    }
+
+    private async void TitlePin_Click(object sender, RoutedEventArgs e)
+    {
+        var pinned = TitlePinButton.IsChecked == true;
+        ApplyAlwaysOnTop(pinned, animate: true);
+        await App.SavePreferenceAsync(s => s with { AlwaysOnTop = pinned });
     }
 
     private void NavModeToggle_Click(object sender, RoutedEventArgs e)
     {
-        Appearance.Navigation = Appearance.Navigation == NavigationPlacement.Top
-            ? NavigationPlacement.Left
-            : NavigationPlacement.Top;
+        var toTop = Appearance.Navigation != NavigationPlacement.Top;
+        Appearance.Navigation = toTop ? NavigationPlacement.Top : NavigationPlacement.Left;
+        WorkspaceMotion.PlayIconFlip90(NavModeGlyph, clockwise: toTop);
     }
 
     private void RailCollapse_Click(object sender, RoutedEventArgs e) => ToggleLeftRail();
 
     private void AppearanceFlyout_Opening(object sender, object e)
     {
-        var presenterStyle = new Style(typeof(MenuFlyoutPresenter));
+        var presenterStyle = new Style(typeof(FlyoutPresenter));
         presenterStyle.Setters.Add(new Setter(FrameworkElement.RequestedThemeProperty, ActualTheme));
+        presenterStyle.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(4)));
         presenterStyle.Setters.Add(new Setter(Control.CornerRadiusProperty, new CornerRadius(8)));
-        AppearanceMenuFlyout.MenuFlyoutPresenterStyle = presenterStyle;
+        presenterStyle.Setters.Add(new Setter(FrameworkElement.MinWidthProperty, 188d));
+        presenterStyle.Setters.Add(new Setter(Control.BackgroundProperty, WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspacePopupBrush")));
+        presenterStyle.Setters.Add(new Setter(Control.BorderBrushProperty, WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspaceBorderBrush")));
+        AppearanceMenuFlyout.FlyoutPresenterStyle = presenterStyle;
+
+        var settings = App.Preferences.Current;
+        var lightPreset = SettingsDialog.EffectivePaletteForMode(settings, light: true);
+        var darkPreset = SettingsDialog.EffectivePaletteForMode(settings, light: false);
+        ThemeLightLabel.Text = SettingsDialog.FormatModeMenuLabel(settings, light: true);
+        ThemeCharcoalLabel.Text = SettingsDialog.FormatModeMenuLabel(settings, light: false);
+        ThemeSystemLabel.Text = InterfaceText.Get("跟随系统", "System", settings.Language);
+
+        if (Application.Current.Resources.TryGetValue("Palette_" + lightPreset.Id, out var lpObj) && lpObj is WorkspacePalette lp)
+        {
+            ThemeLightSwatch.Background = new SolidColorBrush(lp.Window);
+            ThemeLightSwatch.BorderBrush = new SolidColorBrush(lp.Accent);
+        }
+        if (Application.Current.Resources.TryGetValue("Palette_" + darkPreset.Id, out var dpObj) && dpObj is WorkspacePalette dp)
+        {
+            ThemeCharcoalSwatch.Background = new SolidColorBrush(dp.Window);
+            ThemeCharcoalSwatch.BorderBrush = new SolidColorBrush(dp.Accent);
+        }
+
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(ThemeLightItem, ThemeLightLabel.Text);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(ThemeCharcoalItem, ThemeCharcoalLabel.Text);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(ThemeSystemItem, ThemeSystemLabel.Text);
 
         var current = Appearance.Style;
         ThemeLightItem.IsChecked = current == WorkspaceAppearance.Light;
@@ -333,10 +449,28 @@ public sealed partial class WorkspacePage : Page
         ThemeSystemItem.IsChecked = current == WorkspaceAppearance.System;
     }
 
-    private void AppearanceMenu_Click(object sender, RoutedEventArgs e)
+    private async void AppearanceMenu_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is ToggleMenuFlyoutItem { Tag: string raw } && Enum.TryParse<WorkspaceAppearance>(raw, out var next))
-            Appearance.Style = next;
+        var origin = lastThemeClickOrigin;
+        lastThemeClickOrigin = null;
+        if (origin is null && App.Window?.Content is UIElement root && TitleAppearanceButton.ActualWidth > 0)
+        {
+            try
+            {
+                origin = TitleAppearanceButton.TransformToVisual(root)
+                    .TransformPoint(new Point(TitleAppearanceButton.ActualWidth * 0.5, TitleAppearanceButton.ActualHeight * 0.5));
+            }
+            catch (Exception) { }
+        }
+
+        AppearanceMenuFlyout.Hide();
+        if (sender is ToggleButton { Tag: string raw } && Enum.TryParse<WorkspaceAppearance>(raw, out var next))
+        {
+            if (App.Window is MainWindow main)
+                await main.SwitchAppearanceWithRippleAsync(next, origin);
+            else
+                Appearance.Style = next;
+        }
 
         var current = Appearance.Style;
         ThemeLightItem.IsChecked = current == WorkspaceAppearance.Light;
@@ -344,7 +478,11 @@ public sealed partial class WorkspacePage : Page
         ThemeSystemItem.IsChecked = current == WorkspaceAppearance.System;
     }
 
-    private async void Settings_Click(object sender, RoutedEventArgs e) => await OpenSettingsAsync();
+    private async void Settings_Click(object sender, RoutedEventArgs e)
+    {
+        WorkspaceMotion.PlaySpinOnce(TitleSettingsIcon, 360f, 440);
+        await OpenSettingsAsync();
+    }
 
     public void ToggleLeftRail()
     {
@@ -390,28 +528,87 @@ public sealed partial class WorkspacePage : Page
             {
                 ShowTaskDoneCheckmark();
             }
+            else
+            {
+                if (running) { isShowingTaskDone = false; taskDoneResetTimer.Stop(); }
+                UpdateTaskTriggerVisuals();
+            }
             wasRunningJobs = running;
+        }
+        else if (e.PropertyName == nameof(Jobs.CompactLabel))
+        {
+            UpdateTaskTriggerVisuals();
         }
     }
 
     private void ShowTaskDoneCheckmark()
     {
-        if (Application.Current.Resources.TryGetValue("WorkspaceSuccessBrush", out var brushObj) && brushObj is Brush successBrush)
-        {
-            LeftTasksIdleIcon.Glyph = TopTasksIdleIcon.Glyph = "\uE73E";
-            LeftTasksIdleIcon.Foreground = TopTasksIdleIcon.Foreground = successBrush;
-            WorkspaceMotion.PlayPopBounce(LeftTasksIdleIcon, 1.28f);
-            WorkspaceMotion.PlayPopBounce(TopTasksIdleIcon, 1.28f);
-            taskDoneResetTimer.Stop();
-            taskDoneResetTimer.Start();
-        }
+        isShowingTaskDone = true;
+        UpdateTaskTriggerVisuals();
+        WorkspaceMotion.PlayPopBounce(LeftTasksIdleIcon, 1.28f);
+        WorkspaceMotion.PlayPopBounce(TopTasksIdleIcon, 1.28f);
+        taskDoneResetTimer.Stop();
+        taskDoneResetTimer.Start();
     }
 
     private void ResetTaskIdleIcons()
     {
+        isShowingTaskDone = false;
+        UpdateTaskTriggerVisuals();
+    }
+
+    private void UpdateTaskTriggerVisuals()
+    {
+        if (LeftTasksButton is null || TopTasksButton is null) return;
+
+        if (Jobs.HasRunningJobs)
+        {
+            var softAccent = WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspaceAccentSoftBrush");
+            LeftTasksButton.Background = TopTasksButton.Background = softAccent;
+            LeftTasksButton.Foreground = WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspaceTextBrush");
+            LeftTasksLabel.ClearValue(TextBlock.ForegroundProperty);
+            LeftTasksLabel.FontWeight = FontWeights.SemiBold;
+            WorkspaceLocalization.SetText(LeftTasksLabel, Jobs.CompactLabel);
+            LeftTasksBadge.Opacity = TopTasksBadge.Opacity = 1;
+            return;
+        }
+
+        if (isShowingTaskDone)
+        {
+            var successBrush = WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspaceSuccessBrush");
+            var softSuccess = WorkspaceMaterials.ThemeBrush(ActualTheme, "OpSuccessSoftBrush");
+            LeftTasksButton.Background = TopTasksButton.Background = softSuccess;
+            LeftTasksButton.ClearValue(Control.ForegroundProperty);
+            LeftTasksIdleIcon.Glyph = TopTasksIdleIcon.Glyph = "\uE73E";
+            LeftTasksIdleIcon.Foreground = TopTasksIdleIcon.Foreground = successBrush;
+            LeftTasksLabel.Foreground = successBrush;
+            LeftTasksLabel.FontWeight = FontWeights.SemiBold;
+            WorkspaceLocalization.SetText(LeftTasksLabel, "全部已完成");
+            LeftTasksBadge.Opacity = TopTasksBadge.Opacity = 0;
+            return;
+        }
+
         LeftTasksIdleIcon.Glyph = TopTasksIdleIcon.Glyph = "\uE9D5";
-        if (Application.Current.Resources.TryGetValue("WorkspaceSecondaryBrush", out var sec) && sec is Brush secBrush)
-            LeftTasksIdleIcon.Foreground = TopTasksIdleIcon.Foreground = secBrush;
+        LeftTasksIdleIcon.ClearValue(IconElement.ForegroundProperty);
+        TopTasksIdleIcon.ClearValue(IconElement.ForegroundProperty);
+        LeftTasksLabel.ClearValue(TextBlock.ForegroundProperty);
+        WorkspaceLocalization.SetText(LeftTasksLabel, Jobs.CompactLabel);
+        LeftTasksBadge.Opacity = TopTasksBadge.Opacity = 1;
+
+        if (ViewModel.IsQueueExpanded)
+        {
+            LeftTasksButton.Background = WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspaceNavigationSelectedBrush");
+            LeftTasksButton.Foreground = WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspaceNavigationTextBrush");
+            LeftTasksLabel.FontWeight = FontWeights.SemiBold;
+            TopTasksButton.Background = WorkspaceMaterials.ThemeBrush(ActualTheme, "WorkspaceSubtleBrush");
+        }
+        else
+        {
+            LeftTasksButton.ClearValue(Control.BackgroundProperty);
+            LeftTasksButton.ClearValue(Control.ForegroundProperty);
+            LeftTasksLabel.FontWeight = FontWeights.Normal;
+            TopTasksButton.ClearValue(Control.BackgroundProperty);
+        }
     }
 
     internal void ApplyBrand(Core.Settings.AppSettings settings)
@@ -446,9 +643,7 @@ public sealed partial class WorkspacePage : Page
         LeftGroupCollect.Visibility = labelVisibility;
         LeftGroupProcess.Visibility = labelVisibility;
         LeftGroupSystem.Visibility = labelVisibility;
-        LeftTasksLabel.Visibility = labelVisibility;
-        LeftTasksPercent.Visibility = compact ? Visibility.Collapsed : (Jobs.HasRunningJobs ? Visibility.Visible : Visibility.Collapsed);
-        LeftWorkspaceHeaderTitle.Opacity = LeftGroupCollect.Opacity = LeftGroupProcess.Opacity = LeftGroupSystem.Opacity = LeftTasksLabel.Opacity = labelOpacity;
+        LeftWorkspaceHeaderTitle.Opacity = LeftGroupCollect.Opacity = LeftGroupProcess.Opacity = LeftGroupSystem.Opacity = labelOpacity;
 
         LeftWorkspaceHeader.Padding = compact ? new Thickness(0, 2, 0, 2) : new Thickness(10, 2, 2, 2);
         LeftWorkspaceHeader.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -457,7 +652,7 @@ public sealed partial class WorkspacePage : Page
         RailCollapseButton.HorizontalAlignment = compact ? HorizontalAlignment.Center : HorizontalAlignment.Right;
         Controls.WorkspaceLocalization.SetTip(RailCollapseButton, compact ? "展开工作区侧栏" : "收起工作区侧栏");
 
-        foreach (var button in new[] { LeftWorkspaceNav, LeftSearchNav, LeftConversionNav, LeftNamingNav, LeftCopyNav, LeftSpaceNav, LeftCleanupNav, LeftOutputsNav })
+        foreach (var button in new ButtonBase[] { LeftWorkspaceNav, LeftSearchNav, LeftConversionNav, LeftNamingNav, LeftCopyNav, LeftSpaceNav, LeftCleanupNav, LeftOutputsNav, LeftTasksButton })
         {
             button.Padding = compact ? new Thickness(8, 6, 8, 6) : new Thickness(10, 6, 10, 6);
             button.HorizontalContentAlignment = compact ? HorizontalAlignment.Center : HorizontalAlignment.Stretch;
@@ -604,25 +799,37 @@ public sealed partial class WorkspacePage : Page
             return;
         }
 
-        // Use full-size surfaces throughout the transition. Compositor transforms and clips move their
-        // edges and reveal the navigation; the file list and map never reflow on an animation frame.
+        // Apply the target layout geometry ONCE upfront so ModeMotionCompleted triggers zero layout reflow,
+        // and use pure GPU Translation + Opacity (no Scale text distortion or per-frame ThemeShadow recalculation).
         var railWidth = compact ? CompactRailWidth : CurrentExpandedRailWidth;
-        ApplyRestingRailGeometry(topMode: true, compact);
-        LeftNavigationRail.Width = railWidth;
-        LeftNavigationRail.HorizontalAlignment = HorizontalAlignment.Left;
-        Grid.SetColumnSpan(LeftNavigationRail, 3);
+        ApplyRestingRailGeometry(top, compact);
+        if (top)
+        {
+            LeftNavigationRail.Width = railWidth;
+            LeftNavigationRail.HorizontalAlignment = HorizontalAlignment.Left;
+            Grid.SetColumn(LeftNavigationRail, 0);
+            Grid.SetColumnSpan(LeftNavigationRail, 3);
+        }
+        else
+        {
+            LeftNavigationRail.Width = double.NaN;
+            LeftNavigationRail.HorizontalAlignment = HorizontalAlignment.Stretch;
+            ApplyLeftRailLabels(compact);
+        }
+
         TopIntegratedNavHost.Visibility = TopRightQuickPod.Visibility = LeftNavigationRail.Visibility = Visibility.Visible;
         SetNavigationInput(top);
-        ApplyLeftRailLabels(compact);
-        TopIntegratedNavHost.Measure(new Size(double.PositiveInfinity, WorkspaceTitleBar.Height));
+        UpdateLayout();
+        UpdateSlidingIndicators(animate: false);
 
         var rail = ElementCompositionPreview.GetElementVisual(LeftNavigationRail);
         var nav = ElementCompositionPreview.GetElementVisual(TopIntegratedNavHost);
+        var pod = ElementCompositionPreview.GetElementVisual(TopRightQuickPod);
         var compositor = rail.Compositor;
-        var ease = CompositionEasingFunction.CreatePowerEasingFunction(compositor, CompositionEasingFunctionMode.Out, 4);
+        var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.22f, 1f), new Vector2(0.36f, 1f));
         modeFrom = from;
         modeTo = target;
-        modeDurationMs = 260 * Math.Abs(target - from);
+        modeDurationMs = 195 * Math.Abs(target - from);
         var duration = TimeSpan.FromMilliseconds(modeDurationMs);
         var batch = compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
         modeBatch = batch;
@@ -653,32 +860,19 @@ public sealed partial class WorkspacePage : Page
             surface.StartAnimation(property, animation);
         }
 
-        void Reveal(Visual visual, float width, float startHidden, float endHidden)
-        {
-            var clip = compositor.CreateInsetClip();
-            visual.Clip = clip;
-            Scalar(clip, "RightInset", width * startHidden, width * endHidden);
-        }
-
-        // The sheet's left edge travels the rail's width, while its right edge stays at the window inset.
-        var sheetWidth = (float)Math.Max(1, ActualWidth - 16);
-        float OffsetAt(float position) => (1 - position) * (float)(railWidth - 8);
-        Vector3 ScaleAt(float position) => new(Math.Max(0.01f, 1 - OffsetAt(position) / sheetWidth), 1, 1);
-        var sheetScale = WorkbenchSheet.Scale;
-        Transform(WorkbenchSheet, nameof(UIElement.Scale), sheetScale * ScaleAt(from), sheetScale * ScaleAt(target), sheetScale);
-        Slide(WorkbenchSheet, new Vector3(OffsetAt(from), 0, 0), new Vector3(OffsetAt(target), 0, 0));
-        Slide(LeftNavigationRail, new Vector3(-24 * from, -14 * from, 0), new Vector3(-24 * target, -14 * target, 0));
-        Slide(TopIntegratedNavHost, new Vector3(-18 * (1 - from), 0, 0), new Vector3(-18 * (1 - target), 0, 0));
-        Reveal(rail, (float)railWidth, from, target);
-        Reveal(nav, (float)TopIntegratedNavHost.DesiredSize.Width, 1 - from, 1 - target);
+        var delta = target - from;
+        var sheetShift = (float)Math.Min(railWidth - 8, 128) * delta;
+        var railTravel = (float)Math.Min(railWidth * 0.48, 72);
+        Slide(WorkbenchSheet, new Vector3(sheetShift, 0, 0), Vector3.Zero);
+        Slide(LeftNavigationRail, new Vector3(-railTravel * from, 0, 0), new Vector3(-railTravel * target, 0, 0));
+        Slide(TopIntegratedNavHost, new Vector3(-14 * (1 - from), 0, 0), new Vector3(-14 * (1 - target), 0, 0));
         Scalar(rail, "Opacity", 1 - from, 1 - target);
         Scalar(nav, "Opacity", from, target);
-        Scalar(ElementCompositionPreview.GetElementVisual(TopRightQuickPod), "Opacity", from, target);
+        Scalar(pod, "Opacity", from, target);
 
         modeStart = Stopwatch.GetTimestamp();
         batch.Completed += ModeMotionCompleted;
         batch.End();
-        DispatcherQueue.TryEnqueue(() => UpdateSlidingIndicators(animate: false));
     }
 
     private float CurrentModePosition()
@@ -871,6 +1065,7 @@ public sealed partial class WorkspacePage : Page
             return;
         }
         ViewModel.IsQueueExpanded = false;
+        TaskCenterDialog.HideActive();
         settingsDialog = new SettingsDialog(this, selectEngines, initialPage);
         try { await settingsDialog.ShowAsync(); }
         finally { settingsDialog = null; }
@@ -898,11 +1093,32 @@ public sealed partial class WorkspacePage : Page
         }
     }
 
-    private void TaskQueue_Click(object sender, RoutedEventArgs e) => ViewModel.IsQueueExpanded = !ViewModel.IsQueueExpanded;
+    private async void TaskQueue_Click(object sender, RoutedEventArgs e)
+    {
+        taskHoverOpenTimer.Stop();
+        taskHoverCloseTimer.Stop();
+        isPointerOverTaskTrigger = false;
+        isPointerOverTaskFlyout = false;
+        ViewModel.IsQueueExpanded = false;
+        TaskQueueFlyout.Hide();
+        await TaskCenterDialog.ShowAsync(this, ViewModel);
+    }
+
+    private bool HasNestedFlyoutOpenAboveTaskQueue()
+    {
+        if (XamlRoot is null) return false;
+        var openLightDismiss = VisualTreeHelper.GetOpenPopupsForXamlRoot(XamlRoot)
+            .Count(p => p.IsOpen && p.IsLightDismissEnabled);
+        return openLightDismiss > 1;
+    }
 
     private void QueueStateChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(WorkspaceViewModel.IsQueueExpanded)) UpdateTaskQueue();
+        if (e.PropertyName == nameof(WorkspaceViewModel.IsQueueExpanded))
+        {
+            UpdateTaskTriggerVisuals();
+            UpdateTaskQueue();
+        }
         if (e.PropertyName == nameof(WorkspaceViewModel.TotalReferenceCount))
         {
             var next = ViewModel.TotalReferenceCount;
@@ -921,21 +1137,26 @@ public sealed partial class WorkspacePage : Page
         if (!ViewModel.IsQueueExpanded) { TaskQueueFlyout.Hide(); return; }
         UpdateQueueLayout();
         var topMode = Appearance.Navigation == NavigationPlacement.Top;
-        TaskQueueFlyout.Placement = topMode ? FlyoutPlacementMode.BottomEdgeAlignedRight : FlyoutPlacementMode.RightEdgeAlignedBottom;
-        TaskQueueFlyout.ShowAt(topMode ? TopTasksButton : LeftTasksButton);
+        var target = topMode ? TopTasksButton : LeftTasksButton;
+        var options = new FlyoutShowOptions
+        {
+            Placement = topMode ? FlyoutPlacementMode.BottomEdgeAlignedRight : FlyoutPlacementMode.RightEdgeAlignedBottom,
+            ShowMode = FlyoutShowMode.Transient
+        };
+        TaskQueueFlyout.ShowAt(target, options);
     }
 
     private void UpdateQueueLayout()
     {
         if (TaskQueuePanel is null) return;
         TaskQueuePanel.RequestedTheme = ActualTheme;
-        TaskQueueScroll.Width = Math.Clamp(ActualWidth - 96, 320, 680);
+        TaskQueueScroll.Width = Math.Clamp(ActualWidth - 72, 300, 376);
         TaskQueueScroll.MaxHeight = Math.Max(140, ActualHeight - 96);
         var style = new Style(typeof(FlyoutPresenter));
         style.Setters.Add(new Setter(FrameworkElement.RequestedThemeProperty, ActualTheme));
         style.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(0)));
         style.Setters.Add(new Setter(Control.CornerRadiusProperty, new CornerRadius(10)));
-        style.Setters.Add(new Setter(FrameworkElement.MaxWidthProperty, 720d));
+        style.Setters.Add(new Setter(FrameworkElement.MaxWidthProperty, 392d));
         TaskQueueFlyout.FlyoutPresenterStyle = style;
     }
 

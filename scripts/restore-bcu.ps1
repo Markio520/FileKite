@@ -1,3 +1,4 @@
+param([string]$HeadlessOutput)
 $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path $PSScriptRoot -Parent
 $taskCache = Join-Path $taskRoot 'artifacts/dependencies/bcu/6.3'
@@ -19,4 +20,25 @@ if ($taskActual -ne $taskExpected) {
 if (-not (Test-Path -LiteralPath (Join-Path $taskSource 'source/UninstallTools/ApplicationUninstallerEntry.cs'))) {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::ExtractToDirectory($taskArchive, (Join-Path $taskCache 'source'))
+}
+
+if ($HeadlessOutput) {
+    $output = [IO.Directory]::CreateDirectory([IO.Path]::GetFullPath($HeadlessOutput)).FullName
+    # These two pinned upstream files mix scanner utilities and WinForms-only overloads.
+    # Generate the build-local copies so the downloaded sources remain reusable by other builds.
+    function Write-HeadlessSource($relativePath, $methods, $expectedCount) {
+        $file = Join-Path $taskSource "source/KlocTools/$relativePath"
+        $original = [IO.File]::ReadAllText($file)
+        $pattern = "(?ms)^        public static [\w?]+ ($methods)\([^\r\n]*\)\s*\{.*?^        \}\r?\n"
+        if ([regex]::Matches($original, $pattern).Count -ne $expectedCount) {
+            throw "Review the headless adapter for $relativePath after the upstream source change."
+        }
+        $adapted = [regex]::Replace($original.Replace('using System.Windows.Forms;', ''), $pattern, '')
+        $target = Join-Path $output ([IO.Path]::GetFileName($file))
+        if (![IO.File]::Exists($target) -or [IO.File]::ReadAllText($target) -cne $adapted) {
+            [IO.File]::WriteAllText($target, $adapted)
+        }
+    }
+    Write-HeadlessSource 'Tools/WindowsTools.cs' 'FlashWindowEx' 1
+    Write-HeadlessSource 'Extensions/BooleanTools.cs' 'ToBool|ToCheckState|ToNullBool' 4
 }

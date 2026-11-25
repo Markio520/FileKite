@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="FileSystem/FileSearchService.cs;FileSystem/DirectorySearchIndex.cs" />
+    <Compile Remove="Windows/Everything*.cs;FileSystem/FileSearchService.cs;FileSystem/DirectorySearchIndex.cs" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -26,7 +26,7 @@ public static class FileCollectionDialogs
             canConfirm: (_, preserve) => bundle.Files.Count > 0 || (preserve && bundle.Folders.Count > 0));
 
         var card = WrapInModalCard(picker);
-        var dialog = FramelessPickerDialog(owner, card, "加入" + target.Title, minWidth: 440);
+        var dialog = FramelessPickerDialog(owner, card, "加入" + target.Title, minWidth: 440, resizableRoot: (Grid)card.Child, minHeight: 340);
         picker.CloseRequested += (_, _) => dialog.Hide();
 
         await dialog.ShowAsync();
@@ -40,7 +40,7 @@ public static class FileCollectionDialogs
         var picker = new CollectionSourcePicker();
         picker.Initialize(source, target, targetBadge: target.Title, verb: "导入");
 
-        var dialog = FramelessPickerDialog(owner, picker, "从暂存区导入" + target.Title, minWidth: 520);
+        var dialog = FramelessPickerDialog(owner, picker, "从暂存区导入" + target.Title, minWidth: 520, resizableRoot: picker.Content as Grid, minHeight: 360);
         picker.CloseRequested += (_, _) => dialog.Hide();
 
         await dialog.ShowAsync();
@@ -53,7 +53,7 @@ public static class FileCollectionDialogs
         var picker = new CollectionSourcePicker();
         picker.Initialize(source, target: null, targetBadge: "清理清单", verb: primaryVerb);
 
-        var dialog = FramelessPickerDialog(owner, picker, title, minWidth: 520);
+        var dialog = FramelessPickerDialog(owner, picker, title, minWidth: 520, resizableRoot: picker.Content as Grid, minHeight: 360);
         picker.CloseRequested += (_, _) => dialog.Hide();
 
         await dialog.ShowAsync();
@@ -76,7 +76,7 @@ public static class FileCollectionDialogs
             allowed: alsoAdd ? null : id => target.CanMoveTo(folders, id));
 
         var card = WrapInModalCard(picker);
-        var dialog = FramelessPickerDialog(owner, card, alsoAdd ? "添加到其他文件夹" : "移动到文件夹", minWidth: 440);
+        var dialog = FramelessPickerDialog(owner, card, alsoAdd ? "添加到其他文件夹" : "移动到文件夹", minWidth: 440, resizableRoot: (Grid)card.Child, minHeight: 340);
         picker.CloseRequested += (_, _) => dialog.Hide();
 
         await dialog.ShowAsync();
@@ -85,12 +85,17 @@ public static class FileCollectionDialogs
         else target.MoveItemsTo(items, folder);
     }
 
-    private static Border WrapInModalCard(FrameworkElement child) => new()
+    private static Border WrapInModalCard(FrameworkElement child)
     {
-        Style = (Style)Application.Current.Resources["WorkspaceModalCardStyle"],
-        Padding = new Thickness(0),
-        Child = child
-    };
+        var host = new Grid { Width = 480, Height = 460 };
+        host.Children.Add(child);
+        return new Border
+        {
+            Style = (Style)Application.Current.Resources["WorkspaceModalCardStyle"],
+            Padding = new Thickness(0),
+            Child = host
+        };
+    }
 
     private static string JoinLabel(FileCollectionBundle bundle) => bundle.Files.Count > 0 ? $"加入 {bundle.Files.Count:N0} 项" : "加入文件夹";
     private static string BundleSummary(FileCollectionBundle bundle) => bundle.Folders.Count == 0 ? $"已选 {bundle.Files.Count:N0} 项"
@@ -128,7 +133,7 @@ public static class FileCollectionDialogs
         PrimaryButtonText = primary, CloseButtonText = "取消", DefaultButton = ContentDialogButton.Primary
     });
 
-    private static ContentDialog FramelessPickerDialog(FrameworkElement owner, FrameworkElement content, string automationName, double minWidth = 520)
+    private static ContentDialog FramelessPickerDialog(FrameworkElement owner, FrameworkElement content, string automationName, double minWidth = 520, Grid? resizableRoot = null, double minHeight = 340)
     {
         var dialog = new ContentDialog
         {
@@ -141,15 +146,17 @@ public static class FileCollectionDialogs
         };
         if (Application.Current.Resources.TryGetValue("DefaultContentDialogStyle", out var styleObj) && styleObj is Style dialogStyle)
             dialog.Style = dialogStyle;
-        dialog.Resources["ContentDialogMaxWidth"] = 740d;
+        dialog.Resources["ContentDialogMaxWidth"] = 2400d;
         dialog.Resources["ContentDialogMinWidth"] = minWidth;
-        dialog.Resources["ContentDialogMaxHeight"] = 620d;
+        dialog.Resources["ContentDialogMaxHeight"] = 1600d;
         dialog.Resources["ContentDialogPadding"] = new Thickness(0);
         dialog.Resources["ContentDialogTitleMargin"] = new Thickness(0);
         dialog.Resources["ContentDialogSeparatorThickness"] = new Thickness(0);
         dialog.Resources["ContentDialogBorderThickness"] = new Thickness(0);
         dialog.Resources["ContentDialogTopOverlay"] = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         AutomationProperties.SetName(dialog, automationName);
+        if (resizableRoot is not null)
+            ResizableDialogShell.Attach(dialog, resizableRoot, minWidth: minWidth, minHeight: minHeight);
         return DialogDismiss.Attach(dialog);
     }
 }

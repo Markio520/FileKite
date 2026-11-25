@@ -13,7 +13,7 @@ $taskNuGetRoot = ($taskCacheOutput -split ':', 2)[1].Trim()
 if (-not (Test-Path -LiteralPath $taskWinApp)) {
     $taskWinApp = Join-Path $taskNuGetRoot "microsoft.windows.sdk.buildtools.winapp/$taskWinAppVersion/tools/win-x64/winapp.exe"
 }
-if (-not (Test-Path -LiteralPath $taskWinApp)) { throw 'The WinApp CLI is missing. Restore the project dependencies first. See README.md.' }
+if (-not (Test-Path -LiteralPath $taskWinApp)) { throw 'The WinApp CLI is missing. Restore the project dependencies first. See docs/development-environment.md.' }
 
 Push-Location $taskProjectRoot
 try {

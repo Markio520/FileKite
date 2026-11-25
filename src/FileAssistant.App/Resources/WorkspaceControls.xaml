@@ -221,12 +221,30 @@
         <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
-    <Style x:Key="WorkspaceFloatingIslandStyle" TargetType="Border">
+    <Style x:Key="WorkspaceFloatingIslandStyle" TargetType="ContentControl">
         <Setter Property="Background" Value="{ThemeResource WorkspaceIslandBrush}" />
         <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceIslandBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="20" />
         <Setter Property="Padding" Value="14,6,8,6" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Canvas.ZIndex" Value="1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Grid Background="Transparent">
+                        <!-- Only the shadow caster is elevated. Keep buttons on the list's input plane. -->
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{TemplateBinding CornerRadius}"
+                                Translation="0,0,24" IsHitTestVisible="False">
+                            <Border.Shadow><ThemeShadow /></Border.Shadow>
+                        </Border>
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Padding="{TemplateBinding Padding}" BorderThickness="{TemplateBinding BorderThickness}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
     <Style x:Key="WorkspaceIslandActionStyle" TargetType="Button">
         <Setter Property="MinHeight" Value="26" />
@@ -243,12 +261,12 @@
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualState x:Name="Normal" />
-                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="ChipRoot.Background" Value="{ThemeResource WorkspaceIslandChipHoverBrush}" /></VisualState.Setters></VisualState>
-                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="ChipRoot.Background" Value="{ThemeResource WorkspaceIslandChipHoverBrush}" /><Setter Target="ChipRoot.Opacity" Value="0.85" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="PointerOver"><VisualState.Setters><Setter Target="ChipRoot.Background" Value="{ThemeResource WorkspaceIslandChipHoverBrush}" /><Setter Target="ChipContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /></VisualState.Setters></VisualState>
+                                <VisualState x:Name="Pressed"><VisualState.Setters><Setter Target="ChipRoot.Background" Value="{ThemeResource WorkspaceIslandChipHoverBrush}" /><Setter Target="ChipContent.Foreground" Value="{ThemeResource WorkspaceNavigationTextBrush}" /><Setter Target="ChipRoot.Opacity" Value="0.85" /></VisualState.Setters></VisualState>
                                 <VisualState x:Name="Disabled"><VisualState.Setters><Setter Target="ChipRoot.Opacity" Value="0.45" /></VisualState.Setters></VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
-                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <ContentPresenter x:Name="ChipContent" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -282,6 +300,66 @@
                                     <VisualState.Setters>
                                         <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
                                         <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <ContentPresenter x:Name="IconPresenter" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="TitleBarChromeToggleStyle" TargetType="ToggleButton">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{ThemeResource WorkspaceSecondaryBrush}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="IconRoot" Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Checked">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceAccentSoftBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceAccentBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceAccentBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="IconRoot.Background" Value="{ThemeResource WorkspaceHoverBrush}" />
+                                        <Setter Target="IconPresenter.Foreground" Value="{ThemeResource WorkspaceAccentBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Disabled">
@@ -613,6 +691,16 @@
         <Setter Property="Foreground" Value="{ThemeResource WorkspaceTextBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style x:Key="WorkspaceFileListHeaderStyle" TargetType="Border">
+        <Setter Property="Padding" Value="18,5" />
+        <Setter Property="Background" Value="{ThemeResource WorkspaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource WorkspaceBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+    </Style>
+    <Style x:Key="WorkspaceFileListFooterStyle" TargetType="Border" BasedOn="{StaticResource WorkspaceFileListHeaderStyle}">
+        <Setter Property="Padding" Value="16,7" />
+        <Setter Property="BorderThickness" Value="0,1,0,0" />
     </Style>
     <Style x:Key="WorkspaceListToolbarStyle" TargetType="Grid">
         <Setter Property="Padding" Value="14,8" />

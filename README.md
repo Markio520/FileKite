@@ -11,7 +11,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows_10%2F11_(x64)-0078D4.svg)](https://github.com/Markio520/FileKite/releases)
 [![Framework](https://img.shields.io/badge/.NET-10.0_LTS_%7C_WinUI_3-512BD4.svg)](global.json)
 
-[**下载免安装版 (Releases)**](https://github.com/Markio520/FileKite/releases) · [**核心功能**](#核心功能) · [**快速构建**](#快速构建与运行) · [**开源许可**](#开源许可与致谢)
+[**下载免安装版 (Releases)**](https://github.com/Markio520/FileKite/releases) · [**更新日志**](CHANGELOG.md) · [**核心功能**](#核心功能) · [**快速构建**](#快速构建与运行) · [**开源许可**](#开源许可与致谢)
 
 </div>
 
@@ -45,11 +45,21 @@
 
 ---
 
+## v1.1.0 更新亮点
+
+- **标题栏专属微动效 & 真圆形像素波纹切色**：新增标题栏窗口置顶图钉（`-45° ↔ 0°` 垂直旋转）、侧栏/顶栏 90° 侧转切换、太阳/月亮 180° 旋换、设置齿轮 360° 旋转，以及从点击坐标扩散的 GPU 圆形波纹切色（动画结束即释放瞬态位图）。
+- **全局可拖动、四边/四角可缩放弹窗**：统一所有弹窗背景色，支持外沿拖拽调尺寸、标题栏拖动移动与双击居中重置；任务队列升级为透明侧栏入口 + 悬停紧凑浮层 + 点击居中弹窗。
+- **体积与性能大幅优化**：自包含便携包解压体积由 `442.59 MiB` 降至 **`384.41 MiB`**；空资料运行内存由 `72.00 MiB` 降至 **`64.48 MiB`**；12 万条批量搜索首页由 `38.62 ms` 降至 **`14.82 ms`**；2.4 万条分组暂存工作集由 `113.21 MiB` 降至 **`91.05 MiB`**。
+- 完整更新记录见 [**CHANGELOG.md**](CHANGELOG.md)。
+
+---
+
 ## 下载即用（普通用户）
 
 无需安装 `.NET` 或配置环境：
-1. 前往 [**GitHub Releases**](https://github.com/Markio520/FileKite/releases) 下载最新的 `FileKite-v1.0.0-win-x64.zip`；
+1. 前往 [**GitHub Releases**](https://github.com/Markio520/FileKite/releases) 下载最新的 `FileKite-v1.1.0-win-x64.zip`；
 2. **完整解压**压缩包到任意目录，直接双击 **`FileKite.exe`** 即可启动。
+3. 首次启动若出现 Windows SmartScreen 提示，点击「更多信息 → 仍要运行」即可，可对照发布页 `SHA256SUMS.txt` 校验完整性。
 
 ---
 
@@ -97,7 +107,7 @@ FileKite/
 .\scripts\test.ps1
 
 # 5. 生成瘦身后的免安装便携发布包 (.zip)
-.\scripts\package-release.ps1 -Version 1.0.0 -Architecture x64
+.\scripts\package-release.ps1 -Version 1.1.0 -Architecture x64
 ```
 
 ---

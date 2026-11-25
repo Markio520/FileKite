@@ -221,7 +221,6 @@ public sealed partial class SettingsDialog
     private Expander Exclusions()
     {
         string title = T("搜索默认排除目录", "Excluded directories");
-        Expander? disclosure = null;
         var input = new TextBox
         {
             PlaceholderText = T("输入目录名或完整路径…", "Directory name or full path…"), MinWidth = 0, FontSize = 12.5, MinHeight = 31
@@ -263,10 +262,7 @@ public sealed partial class SettingsDialog
             }
             await Save(s => s with { ExcludedDirectories = s.ExcludedDirectories.Append(candidate).Distinct(StringComparer.OrdinalIgnoreCase).ToArray() });
             if (App.Preferences.Current.ExcludedDirectories.Contains(candidate, StringComparer.OrdinalIgnoreCase))
-            {
                 input.Text = "";
-                if (disclosure is not null) disclosure.IsExpanded = true;
-            }
         }
         var add = ActionButton(T("添加", "Add"), Add);
         input.KeyDown += async (_, e) => { if (e.Key == VirtualKey.Enter) { e.Handled = true; await Add(); } };
@@ -276,7 +272,6 @@ public sealed partial class SettingsDialog
         Place(entry, input); Place(entry, add, 1);
         var header = Pair(Texts(title, T("过滤开发依赖缓存与系统回收站，避免零碎缓存淹没结果", "Skip dependency caches and system folders in search results.")), entry, 418);
         header.MinHeight = 54;
-        disclosure = Disclosure(title, header, tags, true);
-        return disclosure;
+        return Disclosure(title, header, tags, expanded: false);
     }
 }

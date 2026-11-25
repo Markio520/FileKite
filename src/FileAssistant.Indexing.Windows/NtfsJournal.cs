@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Binary;
+using System.Buffers;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -45,10 +46,15 @@ public sealed class NtfsJournal : IVolumeJournal
         BinaryPrimitives.WriteUInt64LittleEndian(input.AsSpan(32), cursor.JournalId);
         BinaryPrimitives.WriteUInt16LittleEndian(input.AsSpan(40), 2);
         BinaryPrimitives.WriteUInt16LittleEndian(input.AsSpan(42), 3);
-        var data = new byte[64 * 1024];
-        if (handle.IsInvalid || !DeviceIoControl(handle, ReadUnprivileged, input, input.Length, data, data.Length, out var used, 0))
-            throw new IOException("无法继续读取 NTFS 变更日志。", new Win32Exception(Marshal.GetLastPInvokeError()));
-        return Decode(cursor, through, data.AsSpan(0, used));
+        const int bufferSize = 64 * 1024;
+        var data = ArrayPool<byte>.Shared.Rent(bufferSize);
+        try
+        {
+            if (handle.IsInvalid || !DeviceIoControl(handle, ReadUnprivileged, input, input.Length, data, bufferSize, out var used, 0))
+                throw new IOException("无法继续读取 NTFS 变更日志。", new Win32Exception(Marshal.GetLastPInvokeError()));
+            return Decode(cursor, through, data.AsSpan(0, used));
+        }
+        finally { ArrayPool<byte>.Shared.Return(data); }
     }
 
     public static JournalBatch Decode(JournalCursor start, long through, ReadOnlySpan<byte> bytes)

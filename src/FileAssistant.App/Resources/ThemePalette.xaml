@@ -49,11 +49,11 @@
             <Color x:Key="AppDiffAddedBackgroundColor">#22287046</Color>
             <Color x:Key="AppDiffAddedTextColor">#1F6E41</Color>
             <Color x:Key="AppDiffRemovedTextColor">#888D81</Color>
-            <Color x:Key="AppIslandBackgroundColor">#F2252A21</Color>
-            <Color x:Key="AppIslandBorderColor">#30FFFFFF</Color>
-            <Color x:Key="AppIslandTextColor">#FCFBF7</Color>
-            <Color x:Key="AppIslandChipColor">#1EFFFFFF</Color>
-            <Color x:Key="AppIslandChipHoverColor">#32FFFFFF</Color>
+            <Color x:Key="AppIslandBackgroundColor">#F5F6F5F0</Color>
+            <Color x:Key="AppIslandBorderColor">#2E888C82</Color>
+            <Color x:Key="AppIslandTextColor">#1F221C</Color>
+            <Color x:Key="AppIslandChipColor">#E1E3D8</Color>
+            <Color x:Key="AppIslandChipHoverColor">#DCE0D3</Color>
             <Color x:Key="AppCategoryFolderColor">#A67526</Color>
             <Color x:Key="AppCategoryImageColor">#2E7D63</Color>
             <Color x:Key="AppCategoryDocumentColor">#3869A8</Color>
@@ -104,11 +104,11 @@
             <Color x:Key="AppDiffAddedBackgroundColor">#296ED69A</Color>
             <Color x:Key="AppDiffAddedTextColor">#8CE0AE</Color>
             <Color x:Key="AppDiffRemovedTextColor">#8E93A2</Color>
-            <Color x:Key="AppIslandBackgroundColor">#EE222731</Color>
-            <Color x:Key="AppIslandBorderColor">#30FFFFFF</Color>
-            <Color x:Key="AppIslandTextColor">#F5F6F8</Color>
-            <Color x:Key="AppIslandChipColor">#1AFFFFFF</Color>
-            <Color x:Key="AppIslandChipHoverColor">#2EFFFFFF</Color>
+            <Color x:Key="AppIslandBackgroundColor">#EC1D2029</Color>
+            <Color x:Key="AppIslandBorderColor">#22FFFFFF</Color>
+            <Color x:Key="AppIslandTextColor">#F2F4F7</Color>
+            <Color x:Key="AppIslandChipColor">#2E333E</Color>
+            <Color x:Key="AppIslandChipHoverColor">#3E4350</Color>
             <Color x:Key="AppCategoryFolderColor">#E2AC54</Color>
             <Color x:Key="AppCategoryImageColor">#64C49B</Color>
             <Color x:Key="AppCategoryDocumentColor">#6FA3E8</Color>
@@ -160,9 +160,9 @@
             <StaticResource x:Key="AppDiffAddedTextColor" ResourceKey="SystemColorWindowTextColor" />
             <StaticResource x:Key="AppDiffRemovedTextColor" ResourceKey="SystemColorWindowTextColor" />
             <StaticResource x:Key="AppIslandBackgroundColor" ResourceKey="SystemColorWindowColor" />
-            <StaticResource x:Key="AppIslandBorderColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppIslandBorderColor" ResourceKey="SystemColorWindowTextColor" />
             <StaticResource x:Key="AppIslandTextColor" ResourceKey="SystemColorWindowTextColor" />
-            <StaticResource x:Key="AppIslandChipColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="AppIslandChipColor" ResourceKey="SystemColorWindowColor" />
             <StaticResource x:Key="AppIslandChipHoverColor" ResourceKey="SystemColorHighlightColor" />
             <StaticResource x:Key="AppCategoryFolderColor" ResourceKey="SystemColorWindowTextColor" />
             <StaticResource x:Key="AppCategoryImageColor" ResourceKey="SystemColorWindowTextColor" />

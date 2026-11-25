@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <Product>纸鸢 FileKite</Product>
+    <AssemblyTitle>共享索引测试版</AssemblyTitle>
+    <Description>纸鸢 · FileKite · 共享索引测试版</Description>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>../FileAssistant.App/Assets/AppIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <ProjectReference Include="../FileAssistant.Indexing/FileAssistant.Indexing.csproj" />
+    <ProjectReference Include="../FileAssistant.Infrastructure/FileAssistant.Infrastructure.csproj" />
+    <ProjectReference Include="../FileAssistant.SpaceScan/FileAssistant.SpaceScan.csproj" ReferenceOutputAssembly="false" />
+    <Compile Include="../FileAssistant.App/Resources/WorkspacePalette.cs" Link="Resources/WorkspacePalette.cs" />
+    <Page Include="../FileAssistant.App/Resources/ThemePalette.xaml" Link="Resources/ThemePalette.xaml" />
+    <Page Include="../FileAssistant.App/Resources/WorkspaceTheme.xaml" Link="Resources/WorkspaceTheme.xaml" />
+    <_IndexLabNotice Include="../../third-party/index-lab/*.txt;../../third-party/licenses/Apache-2.0.txt;../../third-party/licenses/Microsoft.WindowsAppSDK-*.txt;../../third-party/licenses/Magick.NET-*.txt;../../third-party/licenses/PDFium*.txt;../../third-party/licenses/PdfPig-*.txt;../../third-party/licenses/WinUI-Templates-*.txt" />
+    <None Include="@(_IndexLabNotice)" Link="Licenses/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="CopyScanHost" AfterTargets="Build">
+    <MSBuild Projects="../FileAssistant.SpaceScan/FileAssistant.SpaceScan.csproj" Targets="GetTargetPath"
+        Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier)">
+      <Output TaskParameter="TargetOutputs" ItemName="_ScanTarget" />
+    </MSBuild>
+    <PropertyGroup><_ScanDir>@(_ScanTarget->'%(RootDir)%(Directory)')</_ScanDir></PropertyGroup>
+    <ItemGroup><_ScanFiles Include="$(_ScanDir)FileAssistant.SpaceScan.exe;$(_ScanDir)FileAssistant.SpaceScan.dll;$(_ScanDir)FileAssistant.SpaceScan.runtimeconfig.json;$(_ScanDir)FileAssistant.SpaceScan.deps.json" /></ItemGroup>
+    <Copy SourceFiles="@(_ScanFiles)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

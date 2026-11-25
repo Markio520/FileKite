@@ -58,28 +58,77 @@ public static class SearchRules
         Func<SearchFile, bool>? visible = null)
     {
         var expression = Compile(request, contentMatcher: contentMatcher);
-        var matches = new List<SearchFile>();
-        foreach (var file in files)
+        var offset = Math.Max(0, request.Offset);
+        var size = Math.Max(0, request.PageSize);
+        int keep = size == 0 || offset >= files.Count ? 0 : (int)Math.Min(files.Count, (long)offset + size);
+        bool Matches(SearchFile file)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if ((visible is null || visible(file)) && expression.Matches(file)) matches.Add(file);
+            return (visible == null || visible(file)) && expression.Matches(file);
         }
-        // Sort the complete result before paging, with a stable path tie-breaker.
-        IOrderedEnumerable<SearchFile> ordered = request.Sort switch
+        // Deep pages and whole-list exports are faster with precomputed sort keys and a bulk sort.
+        if (keep > 256 && keep > files.Count / 4)
         {
-            SearchSort.Path => Order(matches, f => f.Directory, request.Descending, StringComparer.OrdinalIgnoreCase),
-            SearchSort.Size => Order(matches, f => f.Size, request.Descending),
-            SearchSort.Modified => Order(matches, f => f.Modified, request.Descending),
-            _ => Order(matches, f => f.Name, request.Descending, StringComparer.OrdinalIgnoreCase)
-        };
-        var page = ordered.ThenBy(f => f.FullPath, StringComparer.OrdinalIgnoreCase)
-            .Skip(request.Offset).Take(request.PageSize).ToArray();
+            var matches = files.Where(Matches).ToList();
+            var items = SortPage(matches, request, offset, size);
+            cancellationToken.ThrowIfCancellationRequested();
+            return new(items, matches.Count, source, skipped);
+        }
+        // The worst retained hit is at the top. Count every match, but retain only the requested prefix.
+        var order = Comparer<PageKey>.Create((left, right) => Compare(right, left));
+        var best = new PriorityQueue<int, PageKey>(Math.Min(keep, 256), order);
+        int total = 0;
+        for (int i = 0; i < files.Count; i++)
+        {
+            var file = files[i];
+            if (!Matches(file)) continue;
+            total++;
+            if (keep == 0) continue;
+            var key = new PageKey(i, request.Sort == SearchSort.Path ? file.Directory : null);
+            if (best.Count < keep) best.Enqueue(i, key);
+            else best.EnqueueDequeue(i, key);
+        }
+        var page = new SearchFile[Math.Max(0, best.Count - offset)];
+        for (int i = page.Length - 1; i >= 0; i--)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            page[i] = files[best.Dequeue()];
+        }
         cancellationToken.ThrowIfCancellationRequested();
-        return new(page, matches.Count, source, skipped);
+        return new(page, total, source, skipped);
+
+        int Compare(PageKey left, PageKey right)
+        {
+            var a = files[left.Index];
+            var b = files[right.Index];
+            int primary = request.Sort switch
+            {
+                SearchSort.Path => StringComparer.OrdinalIgnoreCase.Compare(left.Directory, right.Directory),
+                SearchSort.Size => Nullable.Compare(a.Size, b.Size),
+                SearchSort.Modified => Nullable.Compare(a.Modified, b.Modified),
+                _ => a.NameSpan.CompareTo(b.NameSpan, StringComparison.OrdinalIgnoreCase)
+            };
+            if (primary != 0) return request.Descending ? -Math.Sign(primary) : primary;
+            int path = StringComparer.OrdinalIgnoreCase.Compare(a.FullPath, b.FullPath);
+            return path != 0 ? path : left.Index.CompareTo(right.Index);
+        }
     }
 
-    private static IOrderedEnumerable<SearchFile> Order<T>(IEnumerable<SearchFile> files, Func<SearchFile, T> key,
-        bool descending, IComparer<T>? comparer = null) => descending ? files.OrderByDescending(key, comparer) : files.OrderBy(key, comparer);
+    private readonly record struct PageKey(int Index, string? Directory);
+
+    private static SearchFile[] SortPage(List<SearchFile> matches, SearchRequest request, int offset, int size)
+    {
+        IOrderedEnumerable<SearchFile> Order<T>(Func<SearchFile, T> key, IComparer<T>? comparer = null) =>
+            request.Descending ? matches.OrderByDescending(key, comparer) : matches.OrderBy(key, comparer);
+        var sorted = request.Sort switch
+        {
+            SearchSort.Path => Order(file => file.Directory, StringComparer.OrdinalIgnoreCase),
+            SearchSort.Size => Order(file => file.Size),
+            SearchSort.Modified => Order(file => file.Modified),
+            _ => Order(file => file.Name, StringComparer.OrdinalIgnoreCase)
+        };
+        return sorted.ThenBy(file => file.FullPath, StringComparer.OrdinalIgnoreCase).Skip(offset).Take(size).ToArray();
+    }
 
     private static IEnumerable<string> Tokenize(string text)
     {
@@ -159,8 +208,14 @@ public static class SearchRules
         Regex? wildcard = text.IndexOfAny(['*', '?']) >= 0
             ? new("^" + Regex.Escape(text).Replace("\\*", ".*").Replace("\\?", ".") + "$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.NonBacktracking) : null;
         bool alsoPinyin = pinyin && !usePath && wildcard is null && SearchPinyin.IsQuery(text);
-        return new(f => wildcard?.IsMatch(usePath ? f.FullPath : f.Name) ?? ((usePath ? f.FullPath : f.Name).Contains(text, StringComparison.OrdinalIgnoreCase)
-                || alsoPinyin && SearchPinyin.Matches(f.Name, text)),
+        bool Matches(SearchFile file)
+        {
+            ReadOnlySpan<char> candidate = usePath ? file.FullPath.AsSpan() : file.NameSpan;
+            if (wildcard != null) return wildcard.IsMatch(candidate);
+            return candidate.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                alsoPinyin && !Ascii.IsValid(candidate) && SearchPinyin.Matches(file.Name, text);
+        }
+        return new(Matches,
             (usePath ? "path:" : "") + "\"" + text + "\"", new(usePath ? SearchField.Path : SearchField.Name, wildcard is null ? "contains" : "glob", (object?)wildcard ?? text));
     }
 }
@@ -175,7 +230,19 @@ public sealed class CompiledSearch(List<List<SearchTerm>> groups, List<SearchTer
 {
     public IReadOnlyList<IReadOnlyList<SearchTerm>> Groups => groups;
     public IReadOnlyList<SearchTerm> Filters => filters;
-    public bool Matches(SearchFile file) => groups.Any(group => group.All(term => term.Matches(file))) && filters.All(term => term.Matches(file));
+    public bool Matches(SearchFile file)
+    {
+        foreach (var group in groups)
+            if (MatchesAll(group, file)) return MatchesAll(filters, file);
+        return false;
+    }
+
+    private static bool MatchesAll(List<SearchTerm> terms, SearchFile file)
+    {
+        foreach (var term in terms)
+            if (!term.Matches(file)) return false;
+        return true;
+    }
     public string EverythingExpression => string.Join(' ', new[]
     {
         groups.All(g => g.Count == 0) ? string.Empty : "<" + string.Join(" | ", groups.Select(group => string.Join(' ', group.Select(t => t.Expression)))) + ">",

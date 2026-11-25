@@ -7,6 +7,38 @@ public sealed class FileCollectionTests
 {
     private static SearchFile File(string name) => new(@"C:\fixtures\" + name, false, 10, null);
     [Fact]
+    public void Folder_totals_match_child_first_resolution_for_paths_shared_across_branches()
+    {
+        var collection = new FileCollection();
+        var a = collection.CreateFolder(default, "a");
+        var b = collection.CreateFolder(a, "b");
+        var c = collection.CreateFolder(a, "c");
+        var other = collection.CreateFolder(default, "other");
+        collection.CreateFolder(other, "empty");
+        collection.AddFiles(a, [File("SHARED") with { Size = 100 }]);
+        collection.AddFiles(c, [File("shared") with { Size = 90 }, File("only-c") with { Size = null }]);
+        collection.AddFiles(b, [File("Shared") with { Size = 20 }, File("only-b")]);
+        collection.AddFiles(other, [File("shared") with { Size = 35 }]);
+        var totals = collection.FolderTotals();
+        foreach (var folder in collection.Folders)
+        {
+            var ordered = collection.Resolve(folder.Id);
+            Assert.Equal((ordered.Count, ordered.Sum(e => e.File.Size ?? 0)), totals[folder.Id]);
+        }
+    }
+
+    [Fact]
+    public void An_invalid_path_in_a_batch_leaves_the_original_memberships_intact()
+    {
+        var collection = new FileCollection();
+        collection.AddFiles(default, [File("existing.txt")]);
+        var before = collection.Entries.ToArray();
+        Assert.Throws<ArgumentException>(() => collection.AddFiles(default,
+            [File("new.txt"), new("relative.txt", false, 2, null)]));
+        Assert.Equal(before, collection.Entries);
+    }
+
+    [Fact]
     public void Memberships_are_unique_per_folder_and_execution_expands_and_deduplicates_them()
     {
         var collection = new FileCollection(); var first = collection.CreateFolder(default, "图片"); var child = collection.CreateFolder(first, "子目录");

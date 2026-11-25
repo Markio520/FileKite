@@ -144,7 +144,21 @@ public partial class App : Application
             throw;
         }
         if (Preferences.Current.PrewarmIndex || BackgroundLaunch) indexWarmup = WarmIndexAsync();
-        startupMaintenance = RunStartupMaintenanceAsync();
+        startupMaintenance = Task.WhenAll(RunStartupMaintenanceAsync(),
+            ReleaseStartupBuffersAsync(collectionsLoading, indexWarmup, lifetime.Token));
+    }
+
+    private static async Task ReleaseStartupBuffersAsync(Task collections, Task warmup, CancellationToken stop)
+    {
+        try
+        {
+            await Task.WhenAll(collections, warmup).WaitAsync(stop).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(3), stop).ConfigureAwait(false);
+            // Return spare heap segments once after the file lists and indexes finish loading.
+            if (GC.GetGCMemoryInfo().TotalCommittedBytes - GC.GetTotalMemory(false) >= 8L * 1024 * 1024)
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
     }
 
     private async void OnWindowClosing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs e)
@@ -259,8 +273,8 @@ public partial class App : Application
             new Infrastructure.Persistence.JsonFileCollectionStore(Path.Combine(collectionsDirectory, "copy.json")));
         var paths = Infrastructure.Engines.EnginePaths.Installed with { Preferences = () => Preferences.Current };
         FileProcessing = new Infrastructure.Engines.LocalFileProcessingService(paths, Jobs.Slots);
-        EngineSettings = new(FileProcessing, new Infrastructure.Engines.EnginePackageInstaller(new HttpClient { Timeout = TimeSpan.FromMinutes(10) },
-            Infrastructure.Engines.EnginePaths.ExtensionsDirectory), Infrastructure.Engines.EnginePackageCatalog.Ffmpeg, Infrastructure.Engines.EnginePackageCatalog.LibreOffice);
+        EngineSettings = new(FileProcessing, new Infrastructure.Engines.EnginePackageInstaller(Infrastructure.Engines.EnginePaths.ExtensionsDirectory),
+            Infrastructure.Engines.EnginePackageCatalog.Ffmpeg, Infrastructure.Engines.EnginePackageCatalog.LibreOffice);
         Outputs = new(new Infrastructure.Windows.WindowsFileInteraction());
         CopyService = new(Path.Combine(profile, "CopyRecovery"));
         NamingService = new(Path.Combine(profile, "NamingRecovery"));

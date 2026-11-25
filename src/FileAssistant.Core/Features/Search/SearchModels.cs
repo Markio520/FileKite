@@ -11,10 +11,11 @@ public sealed record SearchFile(string FullPath, bool IsFolder, long? Size, Date
     public bool IsReparsePoint { get; init; }
     public bool IsHiddenOrSystem { get; init; }
     public SearchDirectoryUsage? DirectoryUsage { get; init; }
-    public string Name => IsFolder && FullPath.Length == 3 && FullPath[1] == ':' && Path.EndsInDirectorySeparator(FullPath)
-        ? FullPath : Path.GetFileName(FullPath.TrimEnd('\\', '/'));
+    internal ReadOnlySpan<char> NameSpan => IsFolder && FullPath.Length == 3 && FullPath[1] == ':' && Path.EndsInDirectorySeparator(FullPath)
+        ? FullPath.AsSpan() : Path.GetFileName(FullPath.AsSpan().TrimEnd("\\/"));
+    public string Name => NameSpan.ToString();
     public string Directory => Path.GetDirectoryName(FullPath.TrimEnd('\\', '/')) ?? FullPath;
-    public string Extension => IsFolder ? string.Empty : Path.GetExtension(Name).TrimStart('.').ToLowerInvariant();
+    public string Extension => IsFolder ? string.Empty : Path.GetExtension(NameSpan).TrimStart('.').ToString().ToLowerInvariant();
 }
 
 public sealed record SearchRequest

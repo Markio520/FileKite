@@ -427,6 +427,7 @@ public sealed class ConversionWorkflowTests
         {
             File.WriteAllText(path, "real output");
             var file = new ProducedFile(path, 11, DateTimeOffset.UtcNow, [@"C:\source.png"]);
+            var allTasks = Assert.Single(outputs.Tasks);
             outputs.Add(1, "task one", [file]);
             outputs.Add(2, "task two", [file with { FullPath = path + ".other" }]);
             outputs.TaskId = 1;
@@ -436,6 +437,8 @@ public sealed class ConversionWorkflowTests
             Assert.Empty(outputs.VisibleFiles);
             Assert.False(outputs.HasSelection);
             outputs.ClearRecordsCommand.Execute(null);
+            Assert.Same(allTasks, Assert.Single(outputs.Tasks));
+            Assert.Equal(0, outputs.TaskId);
             Assert.False(outputs.HasFiles);
             Assert.Single(outputs.Tasks);
             Assert.Equal("real output", File.ReadAllText(path));

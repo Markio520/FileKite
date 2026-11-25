@@ -114,6 +114,7 @@ public static class DialogDismiss
 
     private static void WireTemplateParts(ContentDialog dialog, DismissState state)
     {
+        ResizableDialogShell.AttachAuto(dialog);
         var card = FindDescendant<FrameworkElement>(dialog, "BackgroundElement") ?? dialog.Content as FrameworkElement;
         if (card is null) return;
         state.CardElement = card;

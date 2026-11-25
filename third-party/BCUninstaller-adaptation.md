@@ -10,7 +10,7 @@
 
 - 将 KlocTools、UninstallTools 和 HelperTools 的所需源码合并编译为 `FileAssistant.BcuCore.dll`，目标改为 .NET 10 Windows，保留上游资源命名。
 - 排除 BCU 主程序、UninstallTools 的 Controls/Dialogs、依赖 ObjectListView 的 ColumnSorter，以及需要 COM 构建步骤的 FastSizeGenerator。不引入 ObjectListView。
-- 仍使用 Windows Forms 框架和部分上游帮助类；并非没有运行时依赖。直接 NuGet 依赖为 System.Management 8.0.0、TaskScheduler 2.12.2；锁文件随源码保存。
+- 清理辅助进程按需引用 System.Drawing.Common、System.Resources.Extensions、System.Diagnostics.PerformanceCounter、System.Management 和 TaskScheduler。构建时在项目的中间目录生成 WindowsTools 与 BooleanTools 的副本，省去仅供窗口闪烁、复选框状态使用的重载。其他工具方法沿用固定版本的上游实现。扫描器报告的可恢复错误通过原有管道返回工作台。
 - 通过独立 `FileAssistant.CleanupHost` 进程调用注册表软件发现、正常卸载及 IJunkCreator 残留识别，不打开 BCU 主界面，不调用会弹出旧错误框的 JunkManager，也不调用其候选项的 Delete 方法。
 - 文件/注册表清理、占用进程识别、IPC、备份与身份复查由本项目实现。只接受明确的操作类型；软件卸载重新读取登记并校验，不运行请求中直接传入的命令。
 - 正常 MSI 卸载使用已核实产品 GUID 与系统 msiexec `/x /norestart`；其他软件保留自身卸载向导。保护项不能操作，退出码和登记仍存在的情况明确反馈。

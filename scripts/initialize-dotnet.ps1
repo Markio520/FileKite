@@ -21,6 +21,6 @@ try {
     }
 } finally { Pop-Location }
 
-if (-not $taskDotnet) { throw 'Install the .NET SDK specified in global.json first. See README.md.' }
+if (-not $taskDotnet) { throw 'Install the .NET SDK specified in global.json first. See docs/development-environment.md.' }
 $env:DOTNET_ROOT = Split-Path -Parent $taskDotnet
 $env:PATH = $env:DOTNET_ROOT + [IO.Path]::PathSeparator + $env:PATH

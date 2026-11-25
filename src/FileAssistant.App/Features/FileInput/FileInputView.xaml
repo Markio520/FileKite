@@ -245,7 +245,7 @@
                                                     <ScrollViewer x:Name="FilesViewport" Grid.RowSpan="2" SizeChanged="FilesViewport_SizeChanged" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
                                                         <Grid x:Name="TableContent" Width="{Binding ViewportWidth, ElementName=FilesViewport}">
                                                             <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                                                            <Border x:Name="FilesHeader" controls:MarqueeSelection.IsExcluded="True" SizeChanged="FilesHeader_SizeChanged" Padding="18,5" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,0,0,1">
+                                                            <Border x:Name="FilesHeader" controls:MarqueeSelection.IsExcluded="True" SizeChanged="FilesHeader_SizeChanged" Style="{StaticResource WorkspaceFileListHeaderStyle}">
                                                                 <Grid ColumnSpacing="12">
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="{Binding Name, Source={StaticResource FileColumns}, Converter={StaticResource ColumnWidth}}" />
@@ -357,23 +357,22 @@
                                                     </ContentControl>
 
                                                     <!-- Floating Frosted Multi-Select Action Island -->
-                                                    <Border x:Name="FloatingActionIsland" Grid.Row="1" Style="{StaticResource WorkspaceFloatingIslandStyle}" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12,0,12,12" Translation="0,0,24" controls:MarqueeSelection.IsExcluded="True">
-                                                        <Border.Shadow><ThemeShadow /></Border.Shadow>
+                                                    <ContentControl x:Name="FloatingActionIsland" Grid.Row="1" Style="{StaticResource WorkspaceFloatingIslandStyle}" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12,0,12,12" controls:MarqueeSelection.IsExcluded="True">
                                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                             <TextBlock x:Name="IslandSummaryText" controls:WorkspaceLocalization.Text="{x:Bind ViewModel.IslandSummary, Mode=OneWay}" FontSize="12" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceIslandTextBrush}" VerticalAlignment="Center" />
                                                             <Border Width="1" Height="14" Background="{ThemeResource WorkspaceIslandBorderBrush}" Margin="4,0" VerticalAlignment="Center" />
-                                                            <Button controls:WorkspaceLocalization.Content="快速预览" Style="{StaticResource WorkspaceIslandActionStyle}" Click="QuickLook_Click" controls:WorkspaceLocalization.Tip="全尺寸快速预览与画质对比" />
+                                                            <Button controls:WorkspaceLocalization.Content="快速预览" Style="{StaticResource WorkspaceIslandActionStyle}" Click="QuickLook_Click" IsEnabled="{x:Bind ViewModel.CanPreviewSelection, Mode=OneWay}" controls:WorkspaceLocalization.Tip="全尺寸快速预览与画质对比" />
                                                             <Button controls:WorkspaceLocalization.Content="加入暂存" Style="{StaticResource WorkspaceIslandActionStyle}" Click="AddToStaging_Click" Visibility="{x:Bind ViewModel.IsFunctionInput, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.CanExportSelection, Mode=OneWay}" />
                                                             <Button controls:WorkspaceLocalization.Content="转格式" Style="{StaticResource WorkspaceIslandActionStyle}" Click="ConvertSelected_Click" Visibility="{x:Bind ViewModel.IsNotConversionInput, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.CanExportSelection, Mode=OneWay}" />
                                                             <Button controls:WorkspaceLocalization.Content="批量改名" Style="{StaticResource WorkspaceIslandActionStyle}" Click="RenameSelected_Click" Visibility="{x:Bind ViewModel.IsNotRenameInput, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.CanExportSelection, Mode=OneWay}" />
                                                             <Button controls:WorkspaceLocalization.Content="复制整理" Style="{StaticResource WorkspaceIslandActionStyle}" Click="SendSelected_Click" Visibility="{x:Bind ViewModel.IsNotCopyInput, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.CanExportSelection, Mode=OneWay}" />
-                                                            <Button controls:WorkspaceLocalization.Content="移出" Style="{StaticResource WorkspaceIslandActionStyle}" Click="Remove_Click" controls:WorkspaceLocalization.Tip="只从当前列表移出引用，不删除原件" />
+                                                            <Button controls:WorkspaceLocalization.Content="移出" Style="{StaticResource WorkspaceIslandActionStyle}" Click="RemoveIslandSelection_Click" controls:WorkspaceLocalization.Tip="只从当前列表移出引用，不删除原件" />
                                                             <Button Content="✕" Style="{StaticResource WorkspaceIslandActionStyle}" Padding="8,3" Click="ClearSelection_Click" controls:WorkspaceLocalization.Name="取消勾选" controls:WorkspaceLocalization.Tip="取消勾选" />
                                                         </StackPanel>
-                                                    </Border>
+                                                    </ContentControl>
                                                 </Grid>
 
-                                                <Border Grid.Row="2" controls:MarqueeSelection.IsExcluded="True" Background="{ThemeResource WorkspaceSubtleBrush}" BorderBrush="{ThemeResource WorkspaceBorderBrush}" BorderThickness="0,1,0,0" Padding="16,7">
+                                                <Border Grid.Row="2" controls:MarqueeSelection.IsExcluded="True" Style="{StaticResource WorkspaceFileListFooterStyle}">
                                                     <Grid ColumnSpacing="12">
                                                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                                         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">

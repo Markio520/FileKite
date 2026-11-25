@@ -24,7 +24,7 @@ public enum WorkspaceSortField
 /// <summary>Workspace presentation state. Sample actions never access the file system.</summary>
 public partial class WorkspaceViewModel : ObservableObject
 {
-    private readonly List<WorkspaceFile> files = [];
+    private readonly List<WorkspaceFile> sampleFiles = [];
     private readonly IFileInputReader? inputReader;
     private CancellationTokenSource? importCancellation;
     private TaskCompletionSource? loadingFinished;
@@ -50,13 +50,15 @@ public partial class WorkspaceViewModel : ObservableObject
     public bool IsNotConversionInput => Purpose != WorkspaceInputPurpose.Conversion;
     public bool IsNotRenameInput => Purpose != WorkspaceInputPurpose.Rename;
     public bool IsNotCopyInput => Purpose != WorkspaceInputPurpose.Copy;
-    public bool ShowFloatingIsland => HasSelection && ShowList;
+    public bool ShowFloatingIsland => HasSelection && !IsLoading && !HasError;
     public string Title => Purpose switch { WorkspaceInputPurpose.Staging => "文件暂存区", WorkspaceInputPurpose.Conversion => "格式转换", WorkspaceInputPurpose.Rename => "待改名文件", _ => "复制与整理" };
     public string EmptyTitle => CurrentFolderId != Guid.Empty ? "这个软件文件夹还没有文件" : IsStaging ? "暂存区还没有文件" : "还没有待处理的文件";
     public string InputDescription => IsStaging ? "选择、拖入或粘贴文件，稍后交给需要的功能。" : "直接添加文件，或从暂存区选择文件导入。";
     public bool CanReceiveFiles => !IsLoading;
     public bool CanCancelLoading => IsLoading && !restoringCollection;
     public bool CanExportSelection => !IsLoading && !HasSamples && SelectionCount > 0;
+    public bool CanPreviewSelection => selectedFiles.Any(row => row.Source is not null)
+        || (selectedFiles.Any(row => row.IsCollectionFolder) && SelectedEntries.Count > 0);
     public bool CanExportAll => !IsLoading && !HasSamples && (ScopeEntries.Count > 0 || collection.Folders.Any(folder => folder.ParentId == CurrentFolderId));
     public string SendSelectedLabel => $"选中 {SelectionCount:N0} 项 → 复制与整理";
     public string SendAllLabel => $"当前文件夹全部 {ScopeEntries.Count:N0} 项 → 复制与整理";
@@ -64,7 +66,7 @@ public partial class WorkspaceViewModel : ObservableObject
     public string SendAllToConversionLabel => $"当前文件夹全部 {ScopeEntries.Count:N0} 项 → 格式转换";
     public string SendSelectedToNamingLabel => $"选中 {SelectionCount:N0} 项 → 批量改名";
     public string SendAllToNamingLabel => $"当前文件夹全部 {ScopeEntries.Count:N0} 项 → 批量改名";
-    public int TotalReferenceCount => HasSamples ? files.Count : SearchEntries.Count;
+    public int TotalReferenceCount => HasSamples ? sampleFiles.Count : SearchEntries.Count;
     public bool HasAnyReferences => TotalReferenceCount > 0;
     public bool HasCustomFolders => collection.Folders.Count > 0;
     public int CustomFolderCount => collection.Folders.Count;
@@ -140,12 +142,13 @@ public partial class WorkspaceViewModel : ObservableObject
         SelectionCount = selectedFiles.Count;
         SelectedFile = current ?? selectedFiles.LastOrDefault();
         OnPropertyChanged(nameof(SelectedEntries));
+        OnPropertyChanged(nameof(CanPreviewSelection));
         OnPropertyChanged(nameof(EffectiveEntries));
         OnPropertyChanged(nameof(CanRenameFolder));
         OnPropertyChanged(nameof(SelectedRows));
         OnPropertyChanged(nameof(VisibleSelectedCount));
     }
-    public bool HasSamples => files.Count != 0 && files[0].IsSample;
+    public bool HasSamples => sampleFiles.Count != 0;
     public string BatchOrigin => HasSamples ? "示例文件 · 不读取本地文件" : IsStaging ? "暂存引用 · 不改动原件" : "独立输入 · 不自动加入暂存区";
     public string PreviewOrigin => SelectedFile?.IsSample != false ? "示例信息 · 未读取文件内容" : "真实文件信息 · 未加载内容预览";
 
@@ -153,8 +156,8 @@ public partial class WorkspaceViewModel : ObservableObject
     {
         var before = CollectionSnapshot;
         LoadSamplesCommand.Cancel();
-        files.RemoveAll(f => f.IsSample);
         var added = collection.AddFiles(CurrentFolderId, entries);
+        sampleFiles.Clear();
         RememberChange(before, "加入文件");
         HasError = false;
         CollectionChanged();
@@ -209,7 +212,7 @@ public partial class WorkspaceViewModel : ObservableObject
                 : known.Add(item.File.FullPath) ? item with { Status = FileImportStatus.Added }
                 : item with { Status = FileImportStatus.Duplicate, Reason = "当前列表已包含此路径。" }).ToArray();
             var added = items.Where(item => item.Status == FileImportStatus.Added).Select(item => item.File!).ToArray();
-            if (added.Length > 0) { var before = CollectionSnapshot; collection.AddFiles(destination, added); RememberChange(before, "加入文件"); files.RemoveAll(file => file.IsSample); CollectionChanged(); }
+            if (added.Length > 0) { var before = CollectionSnapshot; collection.AddFiles(destination, added); RememberChange(before, "加入文件"); sampleFiles.Clear(); CollectionChanged(); }
             ImportReport = new(items);
             InputFeedback = ImportReport.Summary;
             return ImportReport;
@@ -248,14 +251,14 @@ public partial class WorkspaceViewModel : ObservableObject
     public partial int SelectionCount { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowEmpty), nameof(ShowNoResults), nameof(ShowList), nameof(HasFiles), nameof(CanEditList), nameof(CanReceiveFiles), nameof(CanExportSelection), nameof(CanExportAll), nameof(CanGoUp), nameof(CanRenameFolder), nameof(CanCancelLoading))]
+    [NotifyPropertyChangedFor(nameof(ShowEmpty), nameof(ShowNoResults), nameof(ShowList), nameof(ShowFloatingIsland), nameof(HasFiles), nameof(CanEditList), nameof(CanReceiveFiles), nameof(CanExportSelection), nameof(CanExportAll), nameof(CanGoUp), nameof(CanRenameFolder), nameof(CanCancelLoading))]
     [NotifyCanExecuteChangedFor(nameof(CancelLoadingCommand))]
     [NotifyPropertyChangedFor(nameof(CanUndo))]
     [NotifyCanExecuteChangedFor(nameof(UndoCommand))]
     public partial bool IsLoading { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowEmpty), nameof(ShowNoResults), nameof(ShowList))]
+    [NotifyPropertyChangedFor(nameof(ShowEmpty), nameof(ShowNoResults), nameof(ShowList), nameof(ShowFloatingIsland))]
     public partial bool HasError { get; set; }
 
     [ObservableProperty]
@@ -265,7 +268,7 @@ public partial class WorkspaceViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowEmptyQueue))]
     public partial bool IsTaskExample { get; set; }
 
-    public bool HasFiles => files.Count > 0 || collection.Folders.Count > 0;
+    public bool HasFiles => HasSamples || collection.Entries.Count > 0 || collection.Folders.Count > 0;
     public bool CanEditList => HasFiles && !IsLoading;
     public bool HasSelection => SelectedFile is not null;
     public bool ShowSelectionHint => !HasSelection;
@@ -273,9 +276,18 @@ public partial class WorkspaceViewModel : ObservableObject
     public bool ShowNoResults => HasCurrentItems && VisibleFiles.Count == 0 && !IsLoading && !HasError;
     public bool ShowList => VisibleFiles.Count > 0 && !IsLoading && !HasError;
     public bool ShowEmptyQueue => !IsTaskExample;
-    public string BatchSummary => HasFiles ? collection.Folders.Count > 0
-        ? $"当前文件夹含 {ScopeEntries.Count:N0} 个文件引用 · 全部 {SearchEntries.Count:N0} 个不同路径 · {collection.Folders.Count:N0} 个软件文件夹"
-        : $"{files.Count} 项{(HasSamples ? "示例" : "文件或文件夹")} · 已知大小 {WorkspaceFile.FormatSize(files.Where(file => file.Size >= 0).Sum(file => file.Size))}" : InputDescription;
+    public string BatchSummary
+    {
+        get
+        {
+            if (!HasFiles) return InputDescription;
+            if (collection.Folders.Count > 0)
+                return $"当前文件夹含 {ScopeEntries.Count:N0} 个文件引用 · 全部 {SearchEntries.Count:N0} 个不同路径 · {collection.Folders.Count:N0} 个软件文件夹";
+            if (HasSamples) return $"{sampleFiles.Count} 项示例 · 已知大小 {WorkspaceFile.FormatSize(sampleFiles.Where(file => file.Size >= 0).Sum(file => file.Size))}";
+            var bytes = collection.Entries.Sum(entry => Math.Max(0, entry.File.Size ?? 0));
+            return $"{collection.Entries.Count} 项文件或文件夹 · 已知大小 {WorkspaceFile.FormatSize(bytes)}";
+        }
+    }
     public string ListSummary => $"{VisibleFiles.Count} / {currentRowCount} 项";
     public string SelectionSummary => SelectionCount == 0 ? HasSamples ? "未勾选示例" : $"未勾选 · 当前文件夹及子文件夹共 {ScopeEntries.Count:N0} 项"
         : SelectedScopeSummary;
@@ -302,13 +314,22 @@ public partial class WorkspaceViewModel : ObservableObject
     public string PreviewGlyph => SelectedFile?.Glyph ?? "\uE8A5";
     public SearchFile? PreviewFile => SelectedFile?.ReferenceError is null ? SelectedFile?.Source : null;
 
-    partial void OnSearchTextChanged(string value) => ApplyFilters(preserveSelection: true);
+    partial void OnSearchTextChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) && collection.Folders.Count > 0 && renderedRows.Count > 0)
+        {
+            renderedRows = renderedRows.Where(pair => pair.Value.OwnerFolderId == CurrentFolderId).ToDictionary();
+            foreach (var row in selectedFiles)
+                if (row.EntryId is { } id) renderedRows.TryAdd(id, row);
+        }
+        ApplyFilters(preserveSelection: true);
+    }
     partial void OnFilterIndexChanged(int value) => ApplyFilters(preserveSelection: true);
 
     [RelayCommand]
     private async Task LoadSamplesAsync(string? mode, CancellationToken cancellationToken)
     {
-        if (IsLoading || collection.Folders.Count > 0 || files.Any(f => !f.IsSample)) return;
+        if (IsLoading || collection.Folders.Count > 0 || collection.Entries.Count > 0) return;
         var version = ++importGeneration;
         HasError = false;
         IsLoading = true;
@@ -318,8 +339,8 @@ public partial class WorkspaceViewModel : ObservableObject
             // Intentional delay makes loading and cancellation reviewable.
             await Task.Delay(mode == "slow" ? 4000 : 700, cancellationToken);
             if (version != importGeneration) return;
-            files.Clear();
-            files.AddRange(WorkspaceSamples.Create());
+            sampleFiles.Clear();
+            sampleFiles.AddRange(WorkspaceSamples.Create());
             SearchText = string.Empty;
             FilterIndex = 0;
             ApplyFilters();
@@ -352,7 +373,7 @@ public partial class WorkspaceViewModel : ObservableObject
         if (restoringCollection) return;
         var before = CollectionSnapshot;
         CancelLoading();
-        files.Clear();
+        sampleFiles.Clear();
         collection.ClearFiles(CurrentFolderId);
         RememberChange(before, "清空当前文件夹");
         SearchText = string.Empty;
@@ -393,7 +414,7 @@ public partial class WorkspaceViewModel : ObservableObject
     {
         var before = CollectionSnapshot;
         var chosen = selection.ToArray();
-        foreach (var file in chosen.Where(file => file.IsSample)) files.Remove(file);
+        foreach (var file in chosen.Where(file => file.IsSample)) sampleFiles.Remove(file);
         collection.Remove(chosen.Where(file => file.FolderId is not null).Select(file => file.FolderId!.Value), chosen.Where(file => file.EntryId is not null).Select(file => file.EntryId!.Value));
         RememberChange(before, "移出列表");
         CollectionChanged();
@@ -444,14 +465,7 @@ public partial class WorkspaceViewModel : ObservableObject
             var query = SearchText.Trim();
             var typeFilter = SearchRules.Compile(new SearchRequest { Kind = (SearchKind)FilterIndex });
             currentRowCount = 0;
-            var filtered = CurrentRows().Where(file =>
-            {
-                currentRowCount++;
-                if (query.Length != 0 && !file.Name.Contains(query, StringComparison.OrdinalIgnoreCase) &&
-                    !file.Directory.Contains(query, StringComparison.OrdinalIgnoreCase)) return false;
-                if (file.IsCollectionFolder) return FilterIndex is (int)SearchKind.All or (int)SearchKind.Folders;
-                return FilterIndex == (int)SearchKind.All || typeFilter.Matches(file.Source ?? new SearchFile(file.FullPath, false, file.Size, null));
-            });
+            var filtered = FilteredRows(query, typeFilter);
 
             if (SortField != WorkspaceSortField.Default)
             {

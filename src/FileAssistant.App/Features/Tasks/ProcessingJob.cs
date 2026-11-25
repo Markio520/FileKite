@@ -13,7 +13,13 @@ public partial class ProcessingJob(int id, string name, Action cancel) : Observa
     [ObservableProperty] public partial string Status { get; set; } = "正在处理";
     [ObservableProperty] public partial double Progress { get; set; }
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(CancelCommand))] public partial bool IsRunning { get; set; } = true;
+    [ObservableProperty] public partial bool IsInterrupted { get; set; }
+    [ObservableProperty] public partial string PrimaryOutputDirectory { get; set; } = string.Empty;
     public ObservableCollection<string> Details { get; } = [];
+    public bool HasDetails => Details.Count > 0;
+    public bool HasOutputDirectory => !IsRunning && !string.IsNullOrWhiteSpace(PrimaryOutputDirectory);
+    public bool IsCompletedSuccess => !IsRunning && !IsInterrupted;
+    public bool IsCompletedInterrupted => !IsRunning && IsInterrupted;
     [RelayCommand(CanExecute = nameof(IsRunning))] private void Cancel() { if (IsRunning) { Status = "正在取消…"; cancel(); } }
     public void Update(ProcessingProgress value)
     {
@@ -30,11 +36,18 @@ public partial class ProcessingJob(int id, string name, Action cancel) : Observa
     public void Complete(string summary, IEnumerable<string> details, bool interrupted, IEnumerable<string>? outputDirectories = null)
     {
         if (!IsRunning) return;
+        var dirs = (outputDirectories ?? []).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         if (!interrupted) Progress = 100;
+        IsInterrupted = interrupted;
+        PrimaryOutputDirectory = dirs.FirstOrDefault() ?? string.Empty;
         Status = summary;
         foreach (var detail in details) Details.Add(detail);
         IsRunning = false;
-        Finished?.Invoke(this, outputDirectories ?? []);
+        OnPropertyChanged(nameof(HasDetails));
+        OnPropertyChanged(nameof(HasOutputDirectory));
+        OnPropertyChanged(nameof(IsCompletedSuccess));
+        OnPropertyChanged(nameof(IsCompletedInterrupted));
+        Finished?.Invoke(this, dirs);
     }
     public void Fail(string message) => Complete(message, [message], true);
 }

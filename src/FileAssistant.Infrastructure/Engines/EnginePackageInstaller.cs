@@ -7,8 +7,10 @@ using FileAssistant.Core.Engines;
 namespace FileAssistant.Infrastructure.Engines;
 
 /// <summary>Explicit downloads only; verified archives are installed beside the application, never over running DLLs.</summary>
-public sealed class EnginePackageInstaller(HttpClient client, string enginesDirectory) : IEnginePackageInstaller
+public sealed class EnginePackageInstaller(HttpClient? client, string enginesDirectory) : IEnginePackageInstaller
 {
+    public EnginePackageInstaller(string enginesDirectory) : this(null, enginesDirectory) { }
+    private static readonly Lazy<HttpClient> DownloadClient = new(() => new() { Timeout = TimeSpan.FromMinutes(10) });
     private readonly SemaphoreSlim gate = new(1, 1);
     private const long MaximumArchiveSize = 512L * 1024 * 1024;
     private const long MaximumExtractedSize = 2L * 1024 * 1024 * 1024;
@@ -29,7 +31,7 @@ public sealed class EnginePackageInstaller(HttpClient client, string enginesDire
         try
         {
             Directory.CreateDirectory(staging);
-            using var response = await client.GetAsync(package.DownloadUri, HttpCompletionOption.ResponseHeadersRead, token);
+            using var response = await (client ?? DownloadClient.Value).GetAsync(package.DownloadUri, HttpCompletionOption.ResponseHeadersRead, token);
             response.EnsureSuccessStatusCode();
             var length = response.Content.Headers.ContentLength;
             if (length > MaximumArchiveSize) throw new FileProcessingException("引擎下载包超过大小限制。");

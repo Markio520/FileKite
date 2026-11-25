@@ -52,11 +52,11 @@
             <SolidColorBrush x:Key="WorkspaceDiffAddedBackgroundBrush" Color="#22287046" />
             <SolidColorBrush x:Key="WorkspaceDiffAddedTextBrush" Color="#1F6E41" />
             <SolidColorBrush x:Key="WorkspaceDiffRemovedTextBrush" Color="#888D81" />
-            <SolidColorBrush x:Key="WorkspaceIslandBrush" Color="#F2252A21" />
-            <SolidColorBrush x:Key="WorkspaceIslandBorderBrush" Color="#30FFFFFF" />
-            <SolidColorBrush x:Key="WorkspaceIslandTextBrush" Color="#FCFBF7" />
-            <SolidColorBrush x:Key="WorkspaceIslandChipBrush" Color="#1EFFFFFF" />
-            <SolidColorBrush x:Key="WorkspaceIslandChipHoverBrush" Color="#32FFFFFF" />
+            <SolidColorBrush x:Key="WorkspaceIslandBrush" Color="{ThemeResource AppIslandBackgroundColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandBorderBrush" Color="{ThemeResource AppIslandBorderColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandTextBrush" Color="{ThemeResource AppIslandTextColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandChipBrush" Color="{ThemeResource AppIslandChipColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandChipHoverBrush" Color="{ThemeResource AppIslandChipHoverColor}" />
             <SolidColorBrush x:Key="WorkspaceCategoryFolderBrush" Color="#A67526" />
             <SolidColorBrush x:Key="WorkspaceCategoryImageBrush" Color="#2E7D63" />
             <SolidColorBrush x:Key="WorkspaceCategoryDocumentBrush" Color="#3869A8" />
@@ -152,11 +152,11 @@
             <SolidColorBrush x:Key="WorkspaceDiffAddedBackgroundBrush" Color="#296ED69A" />
             <SolidColorBrush x:Key="WorkspaceDiffAddedTextBrush" Color="#8CE0AE" />
             <SolidColorBrush x:Key="WorkspaceDiffRemovedTextBrush" Color="#8E93A2" />
-            <SolidColorBrush x:Key="WorkspaceIslandBrush" Color="#EE222731" />
-            <SolidColorBrush x:Key="WorkspaceIslandBorderBrush" Color="#30FFFFFF" />
-            <SolidColorBrush x:Key="WorkspaceIslandTextBrush" Color="#F5F6F8" />
-            <SolidColorBrush x:Key="WorkspaceIslandChipBrush" Color="#1AFFFFFF" />
-            <SolidColorBrush x:Key="WorkspaceIslandChipHoverBrush" Color="#2EFFFFFF" />
+            <SolidColorBrush x:Key="WorkspaceIslandBrush" Color="{ThemeResource AppIslandBackgroundColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandBorderBrush" Color="{ThemeResource AppIslandBorderColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandTextBrush" Color="{ThemeResource AppIslandTextColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandChipBrush" Color="{ThemeResource AppIslandChipColor}" />
+            <SolidColorBrush x:Key="WorkspaceIslandChipHoverBrush" Color="{ThemeResource AppIslandChipHoverColor}" />
             <SolidColorBrush x:Key="WorkspaceCategoryFolderBrush" Color="#E2AC54" />
             <SolidColorBrush x:Key="WorkspaceCategoryImageBrush" Color="#64C49B" />
             <SolidColorBrush x:Key="WorkspaceCategoryDocumentBrush" Color="#6FA3E8" />

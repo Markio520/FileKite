@@ -325,8 +325,7 @@
                                     </ScrollViewer>
 
                                     <!-- Floating Multi-Select Action Island for Search Results -->
-                                    <Border x:Name="SearchFloatingIsland" Grid.Row="1" Style="{StaticResource WorkspaceFloatingIslandStyle}" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12,0,12,12" Translation="0,0,24" controls:MarqueeSelection.IsExcluded="True">
-                                        <Border.Shadow><ThemeShadow /></Border.Shadow>
+                                    <ContentControl x:Name="SearchFloatingIsland" Grid.Row="1" Style="{StaticResource WorkspaceFloatingIslandStyle}" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12,0,12,12" controls:MarqueeSelection.IsExcluded="True">
                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                             <TextBlock x:Name="SearchIslandSummaryText" controls:WorkspaceLocalization.Text="{x:Bind ViewModel.IslandSummary, Mode=OneWay}" FontSize="12" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular" Foreground="{ThemeResource WorkspaceIslandTextBrush}" VerticalAlignment="Center" />
                                             <Border Width="1" Height="14" Background="{ThemeResource WorkspaceIslandBorderBrush}" Margin="4,0" VerticalAlignment="Center" />
@@ -338,7 +337,7 @@
                                             <Button controls:WorkspaceLocalization.Content="复制路径" Style="{StaticResource WorkspaceIslandActionStyle}" Click="CopyPathSelection_Click" />
                                             <Button Content="✕" Style="{StaticResource WorkspaceIslandActionStyle}" Padding="8,3" Click="ClearSelection_Click" controls:WorkspaceLocalization.Name="取消选择" controls:WorkspaceLocalization.Tip="取消选择" />
                                         </StackPanel>
-                                    </Border>
+                                    </ContentControl>
                                 </Grid>
 
                                 <StackPanel Grid.Row="4" Background="{ThemeResource WorkspaceSubtleBrush}">

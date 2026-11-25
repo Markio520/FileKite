@@ -41,26 +41,37 @@ public sealed class FileCollection
         if (snapshot.Version != 1) throw new ArgumentException("文件夹数据版本不受支持。");
         var result = new FileCollection();
         if (snapshot.Folders is null || snapshot.Entries is null) throw new ArgumentException("文件夹数据不完整。");
-        result.folders.AddRange(snapshot.Folders); result.entries.AddRange(snapshot.Entries);
-        if (result.folders.Any(folder => folder.Id == Guid.Empty || !result.HasFolder(folder.ParentId) || !ValidName(folder.Name)) ||
-            result.folders.Select(folder => folder.Id).Distinct().Count() != result.folders.Count ||
-            result.entries.Select(entry => entry.Id).Distinct().Count() != result.entries.Count ||
-            result.entries.Any(entry => entry.Id == Guid.Empty || !result.HasFolder(entry.FolderId) || entry.File is null || !Path.IsPathFullyQualified(entry.File.FullPath)))
-            throw new ArgumentException("文件夹数据包含无效条目。");
+        result.folders.AddRange(snapshot.Folders);
+        var parents = new Dictionary<Guid, Guid>(result.folders.Count);
+        foreach (var folder in result.folders)
+            if (folder is null || folder.Id == Guid.Empty || !ValidName(folder.Name) || !parents.TryAdd(folder.Id, folder.ParentId))
+                throw new ArgumentException("文件夹数据包含无效条目。");
         foreach (var folder in result.folders)
         {
-            var seen = new HashSet<Guid> { folder.Id }; var parent = folder.ParentId;
+            int depth = 1;
+            var parent = folder.ParentId;
             while (parent != Guid.Empty)
             {
-                if (!seen.Add(parent) || seen.Count > 128) throw new ArgumentException("文件夹层级无效或过深。");
-                parent = result.folders.First(item => item.Id == parent).ParentId;
+                if (!parents.TryGetValue(parent, out parent)) throw new ArgumentException("文件夹数据包含无效条目。");
+                if (++depth > 128) throw new ArgumentException("文件夹层级无效或过深。");
             }
         }
-        if (result.folders.GroupBy(folder => (folder.ParentId, Name: folder.Name.ToUpperInvariant())).Any(group => group.Count() > 1) ||
-            result.entries.GroupBy(entry => (entry.FolderId, Path: Normalize(entry.File.FullPath).ToUpperInvariant())).Any(group => group.Count() > 1))
+        if (result.folders.GroupBy(folder => (folder.ParentId, Name: folder.Name.ToUpperInvariant())).Any(group => group.Count() > 1))
             throw new ArgumentException("文件夹数据包含重复条目。");
-        for (var index = 0; index < result.entries.Count; index++)
-            result.entries[index] = result.entries[index] with { File = result.entries[index].File with { FullPath = Normalize(result.entries[index].File.FullPath) } };
+        var ids = new HashSet<Guid>();
+        var pathsByFolder = new Dictionary<Guid, HashSet<string>>();
+        result.entries.EnsureCapacity(snapshot.Entries.Count);
+        foreach (var entry in snapshot.Entries)
+        {
+            if (entry is null || entry.Id == Guid.Empty || !ids.Add(entry.Id) ||
+                (entry.FolderId != Guid.Empty && !parents.ContainsKey(entry.FolderId)) || entry.File is null)
+                throw new ArgumentException("文件夹数据包含无效条目。");
+            var path = Normalize(entry.File.FullPath);
+            if (!pathsByFolder.TryGetValue(entry.FolderId, out var paths))
+                pathsByFolder.Add(entry.FolderId, paths = new(StringComparer.Ordinal));
+            if (!paths.Add(path.ToUpperInvariant())) throw new ArgumentException("文件夹数据包含重复条目。");
+            result.entries.Add(path == entry.File.FullPath ? entry : entry with { File = entry.File with { FullPath = path } });
+        }
         return result;
     }
     public static bool ValidName(string? name) => !string.IsNullOrWhiteSpace(name) && name == name.Trim() && name.Length <= 120 &&
@@ -98,10 +109,21 @@ public sealed class FileCollection
     {
         RequireFolder(folder);
         var known = entries.Where(entry => entry.FolderId == folder).Select(entry => Normalize(entry.File.FullPath)).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var added = 0;
-        foreach (var file in files)
-            if (known.Add(Normalize(file.FullPath))) { entries.Add(new(Guid.NewGuid(), folder, file with { FullPath = Normalize(file.FullPath) })); added++; }
-        return added;
+        var originalCount = entries.Count;
+        try
+        {
+            foreach (var file in files)
+            {
+                var path = Normalize(file.FullPath);
+                if (known.Add(path)) entries.Add(new(Guid.NewGuid(), folder, path == file.FullPath ? file : file with { FullPath = path }));
+            }
+        }
+        catch
+        {
+            entries.RemoveRange(originalCount, entries.Count - originalCount);
+            throw;
+        }
+        return entries.Count - originalCount;
     }
     public IReadOnlyList<Guid> Ancestors(Guid id)
     {
@@ -122,34 +144,71 @@ public sealed class FileCollection
     public IReadOnlyList<CollectionEntry> Resolve(Guid folder)
     {
         RequireFolder(folder);
-        // Leaf navigation needs only its direct memberships, without indexing the entire collection.
-        if (!folders.Any(item => item.ParentId == folder))
-            return entries.Where(entry => entry.FolderId == folder)
-                .DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase).ToArray();
-        var childFolders = folders.ToLookup(item => item.ParentId);
-        var childEntries = entries.ToLookup(entry => entry.FolderId);
-        var result = new List<CollectionEntry>();
-        void Visit(Guid id)
-        {
-            foreach (var child in childFolders[id]) Visit(child.Id);
-            result.AddRange(childEntries[id]);
-        }
-        Visit(folder);
-        return result.DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase).ToArray();
+        return OrderedEntries(folder).DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase).ToArray();
     }
     public IReadOnlyList<CollectionEntry> ResolveSelection(IEnumerable<Guid> folderIds, IEnumerable<Guid> entryIds)
     {
         var groups = folderIds.ToHashSet(); var selectedEntries = entryIds.ToHashSet();
+        if (groups.Count == 0 && selectedEntries.Count == 0) return [];
         var selectedFolders = new HashSet<Guid>();
         foreach (var id in groups) selectedFolders.UnionWith(Descendants(id));
-        return ResolveOrdered().Where(entry => selectedFolders.Contains(entry.FolderId) || selectedEntries.Contains(entry.Id))
+        return OrderedEntries(Guid.Empty).Where(entry => selectedFolders.Contains(entry.FolderId) || selectedEntries.Contains(entry.Id))
             .DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase).ToArray();
     }
-    private IReadOnlyList<CollectionEntry> ResolveOrdered()
+    private IEnumerable<CollectionEntry> OrderedEntries(Guid folder)
     {
-        var result = new List<CollectionEntry>();
-        void Visit(Guid id) { foreach (var child in folders.Where(folder => folder.ParentId == id)) Visit(child.Id); result.AddRange(entries.Where(entry => entry.FolderId == id)); }
-        Visit(Guid.Empty); return result;
+        if (folders.Count == 0) return entries;
+        if (!folders.Any(item => item.ParentId == folder)) return entries.Where(entry => entry.FolderId == folder);
+        var children = folders.ToLookup(item => item.ParentId);
+        var members = entries.ToLookup(entry => entry.FolderId);
+        var result = new List<CollectionEntry>(folder == Guid.Empty ? entries.Count : 0);
+        void Visit(Guid id)
+        {
+            foreach (var child in children[id]) Visit(child.Id);
+            result.AddRange(members[id]);
+        }
+        Visit(folder);
+        return result;
+    }
+
+    public IReadOnlyDictionary<Guid, (int Count, long Bytes)> FolderTotals()
+    {
+        var totals = new Dictionary<Guid, (int, long)>(folders.Count);
+        if (folders.Count == 0) return totals;
+        var children = folders.ToLookup(folder => folder.ParentId);
+        var members = entries.ToLookup(entry => entry.FolderId);
+        var last = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        int position = 0;
+        foreach (var folder in children[Guid.Empty]) Visit(folder, null);
+        return totals;
+
+        void Visit(CollectionFolder folder, FolderScan? parent)
+        {
+            var scope = new FolderScan(position, parent);
+            foreach (var child in children[folder.Id]) Visit(child, scope);
+            foreach (var entry in members[folder.Id])
+            {
+                var path = entry.File.FullPath;
+                int previous = last.GetValueOrDefault(path, -1);
+                last[path] = position++;
+                // A subtree occupies a contiguous interval in Resolve's child-first order.
+                // Count the first occurrence in each enclosing subtree and use that reference's size.
+                for (var node = scope; node != null && previous < node.Start; node = node.Parent)
+                {
+                    node.Count++;
+                    node.Bytes = checked(node.Bytes + (entry.File.Size ?? 0));
+                }
+            }
+            totals.Add(folder.Id, (scope.Count, scope.Bytes));
+        }
+    }
+
+    private sealed class FolderScan(int start, FolderScan? parent)
+    {
+        public int Start { get; } = start;
+        public FolderScan? Parent { get; } = parent;
+        public int Count;
+        public long Bytes;
     }
     public FileCollectionBundle Export(Guid current, IEnumerable<Guid>? folderIds = null, IEnumerable<Guid>? entryIds = null)
     {
@@ -160,7 +219,7 @@ public sealed class FileCollection
         var included = new HashSet<Guid>(); foreach (var id in roots) included.UnionWith(Descendants(id));
         var direct = (entryIds ?? entries.Where(entry => entry.FolderId == current).Select(entry => entry.Id)).ToHashSet();
         return new(folders.Where(folder => included.Contains(folder.Id)).Select(folder => roots.Contains(folder.Id) ? folder with { ParentId = Guid.Empty } : folder).ToArray(),
-            ResolveOrdered().Where(entry => included.Contains(entry.FolderId) || direct.Contains(entry.Id))
+            OrderedEntries(Guid.Empty).Where(entry => included.Contains(entry.FolderId) || direct.Contains(entry.Id))
                 .Select(entry => included.Contains(entry.FolderId) ? entry : entry with { FolderId = Guid.Empty })
                 .DistinctBy(entry => (entry.FolderId, Path: Normalize(entry.File.FullPath).ToUpperInvariant())).ToArray());
     }

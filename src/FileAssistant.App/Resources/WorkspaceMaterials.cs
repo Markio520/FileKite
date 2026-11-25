@@ -132,7 +132,10 @@ internal static class WorkspaceMaterials
                 : isDefaultPalette ? (light ? Color.FromArgb(0x2E, 0x88, 0x8C, 0x82) : Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF))
                 : (light ? WithAlpha(p.Secondary, 0x32) : Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF));
 
-            Set(p.Text, ["AppTextColor"], ["WorkspaceTextBrush", "WorkspaceNavigationTextBrush", "TextFillColorPrimaryBrush", "OpChoiceTextBrush"]);
+            var islandSurface = Mix(p.Card, p.Rail, .4);
+            Set(s.Mica ? WithAlpha(islandSurface, light ? (byte)0xF5 : (byte)0xEC) : islandSurface,
+                ["AppIslandBackgroundColor"], ["WorkspaceIslandBrush"]);
+            Set(p.Text, ["AppTextColor", "AppIslandTextColor"], ["WorkspaceTextBrush", "WorkspaceNavigationTextBrush", "WorkspaceIslandTextBrush", "TextFillColorPrimaryBrush", "OpChoiceTextBrush"]);
             Set(p.Secondary, ["AppSecondaryTextColor"], ["WorkspaceSecondaryBrush", "TextFillColorSecondaryBrush"]);
             Set(p.Accent, ["AppAccentColor", "SystemAccentColor"], ["SelectionIndicatorBrush", "WorkspaceMarqueeFillBrush", "WorkspaceAccentBrush", "AccentFillColorDefaultBrush", "AccentButtonBackground", "NavigationViewSelectionIndicatorForeground"]);
             Set(accentText, ["AppAccentTextColor"], ["AccentTextFillColorPrimaryBrush"]);
@@ -140,10 +143,10 @@ internal static class WorkspaceMaterials
             Set(accentTertiary, ["AppAccentTertiaryColor", "SystemAccentColorDark1"], ["AccentFillColorTertiaryBrush", "AccentButtonBackgroundPressed"]);
             Set(p.OnAccent, ["AppOnAccentColor"], ["WorkspaceOnAccentBrush", "TextOnAccentFillColorPrimaryBrush", "TextOnAccentFillColorSecondaryBrush", "AccentButtonForeground", "AccentButtonForegroundPointerOver", "AccentButtonForegroundPressed"]);
 
-            Set(navSelected, ["AppNavigationColor"], ["WorkspaceNavigationSelectedBrush", "OpChoiceBrush"]);
+            Set(navSelected, ["AppNavigationColor", "AppIslandChipColor"], ["WorkspaceNavigationSelectedBrush", "OpChoiceBrush", "WorkspaceIslandChipBrush"]);
             Set(rowSelected, ["AppAccentSubtleColor"], ["WorkspaceAccentSubtleBrush"]);
             Set(WithAlpha(p.Accent, light ? (byte)26 : (byte)44), ["AppAccentSoftColor"], ["WorkspaceAccentSoftBrush"]);
-            Set(selectionHover, ["AppSelectionHoverColor"], ["WorkspaceHoverBrush", "WorkspaceControlHoverBrush"]);
+            Set(selectionHover, ["AppSelectionHoverColor", "AppIslandChipHoverColor"], ["WorkspaceHoverBrush", "WorkspaceControlHoverBrush", "WorkspaceIslandChipHoverBrush"]);
             Set(opField, ["OpFieldColor"], ["OpSoftBrush"]);
             Set(opFieldHover, ["OpFieldHoverColor"], ["OpSoftHoverBrush"]);
             Set(divider, ["OpDividerColor"], ["OpDividerBrush"]);
@@ -161,7 +164,7 @@ internal static class WorkspaceMaterials
             Set(glassControl, ["AppGlassControlColor"], ["WorkspaceControlBrush"]);
             Set(glassField, ["AppGlassFieldColor"], ["WorkspaceFieldBrush"]);
             Set(borderSolid, ["AppBorderColor"], []);
-            Set(glassBorder, ["AppGlassBorderColor"], ["WorkspaceBorderBrush"]);
+            Set(glassBorder, ["AppGlassBorderColor", "AppIslandBorderColor"], ["WorkspaceBorderBrush", "WorkspaceIslandBorderBrush"]);
 
             var popup = (AcrylicBrush)surfaces["WorkspacePopupBrush"];
             popup.TintColor = popupTint;

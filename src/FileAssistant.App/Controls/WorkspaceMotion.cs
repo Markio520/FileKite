@@ -67,6 +67,107 @@ internal static class WorkspaceMotion
         catch (Exception) { }
     }
 
+    public static void SetOrAnimateRotation(UIElement? element, float targetDegrees, bool animate, int durationMs = 240)
+    {
+        if (element is not FrameworkElement fe) return;
+        try
+        {
+            var visual = ElementCompositionPreview.GetElementVisual(fe);
+            EnsureIconCenterPoint(fe, visual);
+            if (!animate || !Enabled || !fe.IsLoaded)
+            {
+                visual.StopAnimation("RotationAngleInDegrees");
+                visual.RotationAngleInDegrees = targetDegrees;
+                return;
+            }
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.22f, 1f), new Vector2(0.36f, 1f));
+            var rot = compositor.CreateScalarKeyFrameAnimation();
+            rot.InsertKeyFrame(1f, targetDegrees, ease);
+            rot.Duration = TimeSpan.FromMilliseconds(durationMs);
+            visual.StartAnimation("RotationAngleInDegrees", rot);
+        }
+        catch (Exception) { }
+    }
+
+    public static void PlayIconFlip90(UIElement? element, bool clockwise, int durationMs = 300)
+    {
+        if (!Enabled || element is not FrameworkElement fe || !fe.IsLoaded) return;
+        try
+        {
+            var visual = ElementCompositionPreview.GetElementVisual(fe);
+            EnsureIconCenterPoint(fe, visual);
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.22f, 1f), new Vector2(0.36f, 1f));
+
+            var rot = compositor.CreateScalarKeyFrameAnimation();
+            rot.InsertKeyFrame(0f, clockwise ? -90f : 90f);
+            rot.InsertKeyFrame(1f, 0f, ease);
+            rot.Duration = TimeSpan.FromMilliseconds(durationMs);
+
+            var scale = compositor.CreateVector3KeyFrameAnimation();
+            scale.InsertKeyFrame(0f, new Vector3(0.82f, 0.82f, 1f));
+            scale.InsertKeyFrame(1f, Vector3.One, ease);
+            scale.Duration = TimeSpan.FromMilliseconds(durationMs);
+
+            visual.StartAnimation("RotationAngleInDegrees", rot);
+            visual.StartAnimation("Scale", scale);
+        }
+        catch (Exception) { }
+    }
+
+    public static void PlayIconSwapSpin(UIElement? element, int durationMs = 380)
+    {
+        if (!Enabled || element is not FrameworkElement fe || !fe.IsLoaded) return;
+        try
+        {
+            var visual = ElementCompositionPreview.GetElementVisual(fe);
+            EnsureIconCenterPoint(fe, visual);
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.22f, 1f), new Vector2(0.36f, 1f));
+
+            var rot = compositor.CreateScalarKeyFrameAnimation();
+            rot.InsertKeyFrame(0f, -180f);
+            rot.InsertKeyFrame(1f, 0f, ease);
+            rot.Duration = TimeSpan.FromMilliseconds(durationMs);
+
+            var scale = compositor.CreateVector3KeyFrameAnimation();
+            scale.InsertKeyFrame(0f, new Vector3(0.68f, 0.68f, 1f));
+            scale.InsertKeyFrame(1f, Vector3.One, ease);
+            scale.Duration = TimeSpan.FromMilliseconds(durationMs);
+
+            visual.StartAnimation("RotationAngleInDegrees", rot);
+            visual.StartAnimation("Scale", scale);
+        }
+        catch (Exception) { }
+    }
+
+    public static void PlaySpinOnce(UIElement? element, float degrees = 360f, int durationMs = 440)
+    {
+        if (!Enabled || element is not FrameworkElement fe || !fe.IsLoaded) return;
+        try
+        {
+            var visual = ElementCompositionPreview.GetElementVisual(fe);
+            EnsureIconCenterPoint(fe, visual);
+            var compositor = visual.Compositor;
+            var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.22f, 1f), new Vector2(0.36f, 1f));
+
+            var rot = compositor.CreateScalarKeyFrameAnimation();
+            rot.InsertKeyFrame(0f, 0f);
+            rot.InsertKeyFrame(1f, degrees, ease);
+            rot.Duration = TimeSpan.FromMilliseconds(durationMs);
+            visual.StartAnimation("RotationAngleInDegrees", rot);
+        }
+        catch (Exception) { }
+    }
+
+    private static void EnsureIconCenterPoint(FrameworkElement fe, Microsoft.UI.Composition.Visual visual)
+    {
+        var w = fe.ActualWidth > 0 ? (float)fe.ActualWidth : 14f;
+        var h = fe.ActualHeight > 0 ? (float)fe.ActualHeight : 14f;
+        visual.CenterPoint = new Vector3(w * 0.5f, h * 0.5f, 0f);
+    }
+
     public static void PlayCascadeItemEntrance(UIElement? container, int index)
     {
         if (!Enabled || container is not FrameworkElement fe || index < 0 || index >= 12) return;
@@ -175,74 +276,51 @@ internal static class WorkspaceMotion
 
     public static void AnimateSpringIsland(FrameworkElement? island, bool show)
     {
-        if (island is null) return;
-        if (!Enabled || !island.IsLoaded)
-        {
-            island.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-            return;
-        }
+        var visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (island is null || island.Visibility == visibility) return;
         try
         {
-            var visual = ElementCompositionPreview.GetElementVisual(island);
-            UpdateCenterPoint(island, visual);
-            var compositor = visual.Compositor;
-
-            if (show)
+            Microsoft.UI.Composition.CompositionAnimationGroup? group = null;
+            if (Enabled && island.IsLoaded)
             {
-                var wasHidden = island.Visibility != Visibility.Visible;
-                island.Visibility = Visibility.Visible;
-                if (!wasHidden) return;
+                ElementCompositionPreview.SetIsTranslationEnabled(island, true);
+                var visual = ElementCompositionPreview.GetElementVisual(island);
+                UpdateCenterPoint(island, visual);
+                var compositor = visual.Compositor;
+                group = compositor.CreateAnimationGroup();
+                var ease = show
+                    ? compositor.CreateCubicBezierEasingFunction(new Vector2(0.18f, 1.24f), new Vector2(0.32f, 1f))
+                    : compositor.CreateCubicBezierEasingFunction(new Vector2(0.32f, 0f), new Vector2(0.67f, 0f));
+                var lift = compositor.CreateScalarKeyFrameAnimation();
+                lift.Target = "Translation.Y";
+                lift.InsertKeyFrame(0f, show ? 24f : 0f);
+                lift.InsertKeyFrame(1f, show ? 0f : 18f, ease);
+                lift.Duration = TimeSpan.FromMilliseconds(show ? 260 : 160);
+                group.Add(lift);
 
-                var overshoot = compositor.CreateCubicBezierEasingFunction(new Vector2(0.18f, 1.24f), new Vector2(0.32f, 1f));
-                var offset = compositor.CreateVector3KeyFrameAnimation();
-                offset.InsertKeyFrame(0f, new Vector3(0f, 24f, 0f));
-                offset.InsertKeyFrame(1f, Vector3.Zero, overshoot);
-                offset.Duration = TimeSpan.FromMilliseconds(260);
-
-                var scale = compositor.CreateVector3KeyFrameAnimation();
-                scale.InsertKeyFrame(0f, new Vector3(0.92f, 0.92f, 1f));
-                scale.InsertKeyFrame(1f, Vector3.One, overshoot);
-                scale.Duration = TimeSpan.FromMilliseconds(260);
-
-                var fade = compositor.CreateScalarKeyFrameAnimation();
-                fade.InsertKeyFrame(0f, 0f);
-                fade.InsertKeyFrame(1f, 1f);
-                fade.Duration = TimeSpan.FromMilliseconds(180);
-
-                visual.StartAnimation("Offset", offset);
-                visual.StartAnimation("Scale", scale);
-                visual.StartAnimation("Opacity", fade);
-            }
-            else if (island.Visibility == Visibility.Visible)
-            {
-                var ease = compositor.CreateCubicBezierEasingFunction(new Vector2(0.32f, 0f), new Vector2(0.67f, 0f));
-                var batch = compositor.CreateScopedBatch(Microsoft.UI.Composition.CompositionBatchTypes.Animation);
-                var offset = compositor.CreateVector3KeyFrameAnimation();
-                offset.InsertKeyFrame(1f, new Vector3(0f, 18f, 0f), ease);
-                offset.Duration = TimeSpan.FromMilliseconds(160);
-
-                var fade = compositor.CreateScalarKeyFrameAnimation();
-                fade.InsertKeyFrame(1f, 0f, ease);
-                fade.Duration = TimeSpan.FromMilliseconds(150);
-
-                visual.StartAnimation("Offset", offset);
-                visual.StartAnimation("Opacity", fade);
-                batch.End();
-                batch.Completed += (_, _) =>
+                if (show)
                 {
-                    island.DispatcherQueue?.TryEnqueue(() =>
-                    {
-                        island.Visibility = Visibility.Collapsed;
-                        visual.Offset = Vector3.Zero;
-                        visual.Opacity = 1f;
-                    });
-                };
+                    var scale = compositor.CreateVector3KeyFrameAnimation();
+                    scale.Target = "Scale";
+                    scale.InsertKeyFrame(0f, new Vector3(0.92f, 0.92f, 1f));
+                    scale.InsertKeyFrame(1f, Vector3.One, ease);
+                    scale.Duration = lift.Duration;
+                    group.Add(scale);
+                }
+
+                var fade = compositor.CreateScalarKeyFrameAnimation();
+                fade.Target = "Opacity";
+                fade.InsertKeyFrame(0f, show ? 0f : 1f);
+                fade.InsertKeyFrame(1f, show ? 1f : 0f);
+                fade.Duration = TimeSpan.FromMilliseconds(show ? 180 : 150);
+                group.Add(fade);
             }
+            // XAML owns visibility and can interrupt a pending hide as soon as the user reselects.
+            if (show) ElementCompositionPreview.SetImplicitShowAnimation(island, group);
+            else ElementCompositionPreview.SetImplicitHideAnimation(island, group);
         }
-        catch (Exception)
-        {
-            island.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        }
+        catch (System.Runtime.InteropServices.COMException) { }
+        island.Visibility = visibility;
     }
 
     public static void AnimateTreemapDrill(UIElement? element, bool zoomIn)

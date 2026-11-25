@@ -33,6 +33,9 @@ internal static class Program
                 try { response = Execute(request, progress, cancellation.Token); }
                 catch (OperationCanceledException) { response = new() { Cancelled = true }; }
                 catch (Exception error) { response = new() { Error = FileCleanupEngine.Describe(error) }; }
+                var warnings = Klocman.Forms.Tools.PremadeDialogs.GetWarnings();
+                if (warnings.Length > 0)
+                    response = response with { Warnings = response.Warnings.Concat(warnings).Distinct().ToArray() };
                 CleanupWire.Write(pipe, 2, response);
                 return 0;
             }

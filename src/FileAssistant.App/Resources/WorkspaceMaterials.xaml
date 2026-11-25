@@ -32,6 +32,9 @@
             <StaticResource x:Key="ExpanderContentBackground" ResourceKey="WorkspaceSubtleBrush" />
             <StaticResource x:Key="FlyoutBackground" ResourceKey="WorkspacePopupBrush" />
             <StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="WorkspacePopupBrush" />
+            <StaticResource x:Key="ContentDialogBackground" ResourceKey="WorkspaceDialogBrush" />
+            <StaticResource x:Key="ContentDialogTopOverlay" ResourceKey="WorkspaceDialogBrush" />
+            <StaticResource x:Key="ContentDialogBorderBrush" ResourceKey="WorkspaceBorderBrush" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
             <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#6616181D" />
@@ -65,6 +68,9 @@
             <StaticResource x:Key="ExpanderContentBackground" ResourceKey="WorkspaceSubtleBrush" />
             <StaticResource x:Key="FlyoutBackground" ResourceKey="WorkspacePopupBrush" />
             <StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="WorkspacePopupBrush" />
+            <StaticResource x:Key="ContentDialogBackground" ResourceKey="WorkspaceDialogBrush" />
+            <StaticResource x:Key="ContentDialogTopOverlay" ResourceKey="WorkspaceDialogBrush" />
+            <StaticResource x:Key="ContentDialogBorderBrush" ResourceKey="WorkspaceBorderBrush" />
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
             <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="{ThemeResource AppWindowOverlayColor}" />
@@ -98,6 +104,9 @@
             <StaticResource x:Key="ExpanderContentBackground" ResourceKey="WorkspaceSubtleBrush" />
             <StaticResource x:Key="FlyoutBackground" ResourceKey="WorkspacePopupBrush" />
             <StaticResource x:Key="MenuFlyoutPresenterBackground" ResourceKey="WorkspacePopupBrush" />
+            <StaticResource x:Key="ContentDialogBackground" ResourceKey="WorkspaceDialogBrush" />
+            <StaticResource x:Key="ContentDialogTopOverlay" ResourceKey="WorkspaceDialogBrush" />
+            <StaticResource x:Key="ContentDialogBorderBrush" ResourceKey="WorkspaceBorderBrush" />
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

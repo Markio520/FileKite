@@ -2,7 +2,6 @@
   <PropertyGroup>
     <Product>纸鸢 FileKite</Product>
     <AssemblyTitle>纸鸢 FileKite</AssemblyTitle>
-    <Version>1.0.0</Version>
     <OutputType>WinExe</OutputType>
     <DisableWindowsAppSDKMLAutoInitialize>true</DisableWindowsAppSDKMLAutoInitialize>
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
@@ -41,8 +40,6 @@
     <Manifest Include="$(ApplicationManifest)" />
     <Content Include="Assets\CreationTemplates\blank.*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\third-party\licenses\**\*" Exclude="..\..\third-party\licenses\Everything-*.txt" Link="Licenses\$([System.String]::Copy('%(RecursiveDir)%(Filename)').Replace('.', '_').Replace('\', '_'))%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="..\..\LICENSE" Link="Licenses\FileKite-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="..\..\NOTICE" Link="Licenses\FileKite-NOTICE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\third-party\SOURCE-ACCESS.md" Link="Licenses\SOURCE-ACCESS.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\third-party\BCUninstaller-adaptation.md" Link="Licenses\BCUninstaller-adaptation.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\third-party\ffmpeg-build-configuration.txt" Link="Licenses\ffmpeg-build-configuration.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
@@ -68,7 +65,8 @@
   -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" />
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" />
   </ItemGroup>
@@ -112,10 +110,12 @@
     </ItemGroup>
   </Target>
   <PropertyGroup>
-    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishReadyToRun>false</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <!-- BCU discovers its scanners and resource accessors through reflection. Preserve the helper's dependency graph. -->
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
   </PropertyGroup>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.GC.ConserveMemory" Value="5" />
+  </ItemGroup>
 </Project>

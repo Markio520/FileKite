@@ -54,6 +54,8 @@ public sealed partial class SettingsDialog : ContentDialog
     private bool applying;
     private bool changingSearch;
     private bool opened;
+    private double? customWidth;
+    private double? customHeight;
     private string query = "";
     private int saveSequence;
     private TaskCompletionSource<bool>? confirmation;
@@ -69,6 +71,13 @@ public sealed partial class SettingsDialog : ContentDialog
         badgeTimer.Tick += (_, _) => { badgeTimer.Stop(); SaveBadge.Visibility = Visibility.Collapsed; };
         indexTimer.Tick += (_, _) => RefreshIndexStatus();
         DialogDismiss.Attach(this);
+        ResizableDialogShell.Attach(
+            this,
+            DialogLayout,
+            minWidth: 520,
+            minHeight: 380,
+            onResized: (w, h) => { customWidth = w; customHeight = h; Resize(); },
+            onReset: () => { customWidth = null; customHeight = null; Resize(); });
         Opened += Dialog_Opened;
         Closed += Dialog_Closed;
         Closing += Dialog_Closing;
@@ -141,9 +150,16 @@ public sealed partial class SettingsDialog : ContentDialog
     private void Resize()
     {
         var root = XamlRoot.Size;
-        var width = Math.Max(0, Math.Min(920, root.Width - (root.Width < 660 ? 16 : 48)));
+        var maxW = Math.Max(320, root.Width - (root.Width < 660 ? 16 : 24));
+        var maxH = Math.Max(280, root.Height - (root.Height < 480 ? 16 : 24));
+        var width = customWidth.HasValue
+            ? Math.Clamp(customWidth.Value, Math.Min(520, maxW), maxW)
+            : Math.Max(0, Math.Min(920, root.Width - (root.Width < 660 ? 16 : 48)));
+        var height = customHeight.HasValue
+            ? Math.Clamp(customHeight.Value, Math.Min(380, maxH), maxH)
+            : Math.Max(0, Math.Min(604, root.Height - (root.Height < 480 ? 16 : 48)));
         DialogLayout.Width = width;
-        DialogLayout.Height = Math.Max(0, Math.Min(604, root.Height - (root.Height < 480 ? 16 : 48)));
+        DialogLayout.Height = height;
         compact = width < 660;
         SidebarColumn.Width = new(compact ? 54 : width < 820 ? 162 : 208);
         Rail.Padding = compact ? new(4, 14, 4, 12) : new(12, 21, 12, 14);
@@ -418,12 +434,14 @@ public sealed partial class SettingsDialog : ContentDialog
         badgeTimer.Stop();
         badgeTimer.Start();
     }
-    private void Notify(string title, string message, InfoBarSeverity severity = InfoBarSeverity.Informational)
+    private void Notify(string title, string message, InfoBarSeverity severity = InfoBarSeverity.Informational,
+        Microsoft.UI.Xaml.Controls.Primitives.ButtonBase? action = null)
     {
         if (!opened) return;
         MessageBar.Title = title;
         MessageBar.Message = message;
         MessageBar.Severity = severity;
+        MessageBar.ActionButton = action;
         MessageBar.IsOpen = true;
     }
 
